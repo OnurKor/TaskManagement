@@ -5,6 +5,44 @@ import { setUser, clearUser } from '../redux/slices/userSlice';
 // Mevcut oturum durumunu kontrol et
 export const checkSession = async () => {
   try {
+    // Önce localStorage'dan kullanıcı durumunu kontrol et
+    const userStateStr = localStorage.getItem('userState');
+    let localUserState = null;
+    
+    if (userStateStr) {
+      try {
+        localUserState = JSON.parse(userStateStr);
+        // Eğer refresh token varsa ve token süresi dolmuşsa, yenilemeyi dene
+        if (localUserState && localUserState.refreshToken) {
+          const currentTime = Math.floor(Date.now() / 1000);
+          
+          // Token süresi dolmuş ya da 5 dakika içinde dolacaksa
+          if (!localUserState.expiresAt || 
+              (localUserState.expiresAt && localUserState.expiresAt - currentTime < 300)) {
+            return await refreshSession();
+          }
+          
+          // Hala geçerli bir token varsa, localStorage'dan yükle
+          if (localUserState.isLoggedIn && localUserState.accessToken) {
+            // Redux store'u localStorage'dan güncelle
+            store.dispatch(setUser({
+              id: localUserState.id,
+              email: localUserState.email,
+              name: localUserState.name,
+              surname: localUserState.surname,
+              accessToken: localUserState.accessToken,
+              refreshToken: localUserState.refreshToken,
+              expiresAt: localUserState.expiresAt,
+            }));
+            return true;
+          }
+        }
+      } catch (e) {
+        console.error('localStorage parsing error:', e);
+      }
+    }
+    
+    // localStorage'dan yükleme başarısız olursa Supabase'den kontrol et
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
@@ -68,10 +106,27 @@ export const signOut = async () => {
 // Tokeni yenile
 export const refreshSession = async () => {
   try {
-    const state = store.getState();
-    const { refreshToken } = state.user;
+    // Önce localStorage'dan, sonra Redux store'dan refreshToken'ı al
+    let refreshToken;
+    const userStateStr = localStorage.getItem('userState');
+    
+    if (userStateStr) {
+      try {
+        const localUserState = JSON.parse(userStateStr);
+        refreshToken = localUserState.refreshToken;
+      } catch (e) {
+        console.error('localStorage parsing error:', e);
+      }
+    }
+    
+    // localStorage'da token bulunamadıysa Redux store'dan al
+    if (!refreshToken) {
+      const state = store.getState();
+      refreshToken = state.user.refreshToken;
+    }
     
     if (!refreshToken) {
+      console.log('Yenilenecek token bulunamadı');
       return false;
     }
     
@@ -80,6 +135,7 @@ export const refreshSession = async () => {
     });
     
     if (error) {
+      console.error('Token yenileme hatası:', error);
       throw error;
     }
     
@@ -89,6 +145,8 @@ export const refreshSession = async () => {
       const nameParts = displayName.split(' ');
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
+      
+      console.log('Token başarıyla yenilendi');
       
       // Redux store'u güncelle
       store.dispatch(setUser({

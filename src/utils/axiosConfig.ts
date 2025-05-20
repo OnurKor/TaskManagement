@@ -15,8 +15,28 @@ const api: AxiosInstance = axios.create({
 // Request interceptor - her istekte token ekle
 api.interceptors.request.use(
   async (config) => {
-    const state = store.getState();
-    const { accessToken, expiresAt, refreshToken } = state.user;
+    // Önce localStorage'dan token bilgilerini al
+    let accessToken, expiresAt, refreshToken;
+    const userStateStr = localStorage.getItem('userState');
+    
+    if (userStateStr) {
+      try {
+        const localUserState = JSON.parse(userStateStr);
+        accessToken = localUserState.accessToken;
+        expiresAt = localUserState.expiresAt;
+        refreshToken = localUserState.refreshToken;
+      } catch (e) {
+        console.error('localStorage parsing error:', e);
+      }
+    }
+    
+    // localStorage'da token bulunamadıysa Redux store'dan al
+    if (!accessToken || !expiresAt || !refreshToken) {
+      const state = store.getState();
+      accessToken = state.user.accessToken;
+      expiresAt = state.user.expiresAt;
+      refreshToken = state.user.refreshToken;
+    }
     
     // Token var ve süresi dolmak üzere veya dolmuşsa yenile
     if (accessToken && expiresAt && refreshToken) {
@@ -25,6 +45,7 @@ api.interceptors.request.use(
       // Token'ın süresinin dolmasına 5 dakika veya daha az kaldıysa yenile
       if (expiresAt - currentTime < 300) {
         try {
+          console.log('Token süresi azaldı, yenileniyor...');
           const { data, error } = await supabase.auth.refreshSession({
             refresh_token: refreshToken,
           });
@@ -34,6 +55,8 @@ api.interceptors.request.use(
           }
           
           if (data && data.session) {
+            console.log('Token başarıyla yenilendi');
+            
             // Redux store'u güncelle
             store.dispatch(refreshTokenSuccess({
               accessToken: data.session.access_token,

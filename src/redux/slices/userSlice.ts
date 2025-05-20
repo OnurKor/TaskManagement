@@ -12,16 +12,39 @@ interface UserState {
   expiresAt: number | null | undefined
 }
 
-const initialState: UserState = {
-  id: null,
-  email: null,
-  name: null,
-  surname: null,
-  isLoggedIn: false,
-  accessToken: null,
-  refreshToken: null,
-  expiresAt: null,
-}
+// Local storage'dan durumu yükle
+const loadState = (): UserState => {
+  try {
+    const serializedState = localStorage.getItem('userState');
+    if (serializedState === null) {
+      return {
+        id: null,
+        email: null,
+        name: null,
+        surname: null,
+        isLoggedIn: false,
+        accessToken: null,
+        refreshToken: null,
+        expiresAt: null,
+      };
+    }
+    return JSON.parse(serializedState);
+  } catch (err) {
+    return {
+      id: null,
+      email: null,
+      name: null,
+      surname: null,
+      isLoggedIn: false,
+      accessToken: null,
+      refreshToken: null,
+      expiresAt: null,
+    };
+  }
+};
+
+// Başlangıç state'i
+const initialState: UserState = loadState()
 
 export const userSlice = createSlice({
   name: 'user',
@@ -36,6 +59,11 @@ export const userSlice = createSlice({
       state.refreshToken = action.payload.refreshToken
       state.expiresAt = action.payload.expiresAt
       state.isLoggedIn = true
+      
+      // State'i localStorage'a kaydet
+      localStorage.setItem('userState', JSON.stringify({
+        ...state
+      }));
     },
     // İşte eklediğimiz refreshTokenSuccess
     refreshTokenSuccess: (
@@ -44,6 +72,11 @@ export const userSlice = createSlice({
     ) => {
       state.accessToken = action.payload.accessToken
       state.expiresAt = action.payload.expiresAt
+      
+      // Güncellenen state'i localStorage'a kaydet
+      localStorage.setItem('userState', JSON.stringify({
+        ...state
+      }));
     },
     clearUser: (state) => {
       state.id = null
@@ -54,6 +87,9 @@ export const userSlice = createSlice({
       state.refreshToken = null
       state.expiresAt = null
       state.isLoggedIn = false
+      
+      // localStorage'dan temizle
+      localStorage.removeItem('userState');
     },
   },
 })
