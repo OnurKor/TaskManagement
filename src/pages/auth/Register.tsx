@@ -1,8 +1,11 @@
-import React from 'react';
-import { TextField, Button, Typography, Box, Link, Container } from '@mui/material';
+import React, { useState } from 'react';
+import { TextField, Button, Typography, Box, Link, Container, Alert } from '@mui/material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { supabase } from '../../utils/supabaseClient';
+import { useAppDispatch } from '../../redux/hooks';
+import { setUser } from '../../redux/slices/userSlice';
 
 const validationSchema = Yup.object({
   name: Yup.string()
@@ -21,6 +24,11 @@ const validationSchema = Yup.object({
 });
 
 const Register: React.FC = () => {
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  
   const formik = useFormik({
     initialValues: {
       name: '',
@@ -30,9 +38,52 @@ const Register: React.FC = () => {
       confirmPassword: '',
     },
     validationSchema: validationSchema,
-    onSubmit: (values) => {
-      console.log('Register form values:', values);
-      // Burada kayıt işlemleri yapılacak
+    onSubmit: async (values) => {
+      try {
+        setError(null);
+        setLoading(true);
+        
+        // Tam adı oluştur
+        const fullName = `${values.name} ${values.surname}`;
+        
+        // Supabase ile kayıt olma
+        const { data, error } = await supabase.auth.signUp({
+          email: values.email,
+          password: values.password,
+          options: {
+            data: {
+              display_name: fullName
+            }
+          }
+        });
+
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.user && data.session) {
+          // Kullanıcı bilgilerini Redux store'a kaydet
+          dispatch(setUser({
+            id: data.user.id,
+            email: data.user.email || null,
+            name: values.name,
+            surname: values.surname,
+            accessToken: data.session.access_token,
+            refreshToken: data.session.refresh_token,
+            expiresAt: data.session.expires_at,
+          }));
+          
+          // Başarılı kayıt sonrası home sayfasına yönlendir
+          navigate('/home');
+        } else {
+          // Supabase bazen e-posta doğrulaması gerektirdiğinde session null olabilir
+          setError('E-posta doğrulaması gerekiyor. Lütfen e-posta kutunuzu kontrol edin.');
+        }
+      } catch (error: any) {
+        setError(error.message || 'Kayıt olurken bir hata oluştu.');
+      } finally {
+        setLoading(false);
+      }
     },
   });
 
@@ -168,11 +219,18 @@ const Register: React.FC = () => {
                 helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
               />
               
+              {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {error}
+                </Alert>
+              )}
+              
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
                 size="large"
+                disabled={loading}
                 sx={{ 
                   mt: 2, 
                   mb: 2, 
@@ -182,7 +240,7 @@ const Register: React.FC = () => {
                   fontWeight: 'bold'
                 }}
               >
-                Kayıt Ol
+                {loading ? 'Kayıt Yapılıyor...' : 'Kayıt Ol'}
               </Button>
               
               <Box sx={{ textAlign: 'center' }}>

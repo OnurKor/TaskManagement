@@ -1,8 +1,11 @@
-import React from 'react';
-import { TextField, Button, Typography, Box, Link, Container } from '@mui/material';
+import React, { useState } from 'react';
+import { TextField, Button, Typography, Box, Link, Container, Alert } from '@mui/material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { supabase } from '../../utils/supabaseClient';
+import { useAppDispatch } from '../../redux/hooks';
+import { setUser } from '../../redux/slices/userSlice';
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -14,15 +17,58 @@ const validationSchema = Yup.object({
 });
 
 const Login: React.FC = () => {
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+
   const formik = useFormik({
     initialValues: {
       email: '',
       password: '',
     },
     validationSchema: validationSchema,
-    onSubmit: (values) => {
-      console.log('Login form values:', values);
-      // Burada login işlemleri yapılacak
+    onSubmit: async (values) => {
+      try {
+        setError(null);
+        setLoading(true);
+        
+        // Supabase ile giriş yapma
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password,
+        });
+
+        if (error) {
+          throw error;
+        }
+        console.log("data", data);
+        if (data && data.user && data.session) {
+          // Kullanıcı adını display_name'den alıyoruz
+          const displayName = data.user.user_metadata?.display_name || '';
+          const nameParts = displayName.split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.slice(1).join(' ') || '';
+          
+          // Kullanıcı bilgilerini Redux store'a kaydet
+          dispatch(setUser({
+            id: data.user.id,
+            email: data.user.email || null,
+            name: firstName,
+            surname: lastName,
+            accessToken: data.session.access_token,
+            refreshToken: data.session.refresh_token,
+            expiresAt: data.session.expires_at,
+          }));
+          
+          // Başarılı giriş sonrası home sayfasına yönlendir
+          navigate('/home');
+        }
+      } catch (error: any) {
+        setError(error.message || 'Giriş yapılırken bir hata oluştu.');
+      } finally {
+        setLoading(false);
+      }
     },
   });
 
@@ -103,29 +149,34 @@ const Login: React.FC = () => {
                 type="password"
                 id="password"
                 autoComplete="current-password"
-                variant="outlined"
-                value={formik.values.password}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.password && Boolean(formik.errors.password)}
-                helperText={formik.touched.password && formik.errors.password}
-                sx={{ mb: 3 }}
-              />
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                size="large"
-                sx={{ 
-                  mt: 2, 
-                  mb: 3, 
-                  py: 1.5,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 'bold'
-                }}
-              >
-                Giriş Yap
+                variant="outlined"            value={formik.values.password}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.password && Boolean(formik.errors.password)}
+            helperText={formik.touched.password && formik.errors.password}
+            sx={{ mb: 3 }}
+          />
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            size="large"
+            disabled={loading}
+            sx={{ 
+              mt: 2, 
+              mb: 3, 
+              py: 1.5,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 'bold'
+            }}
+          >
+            {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
               </Button>
               
               <Box sx={{ textAlign: 'center' }}>
