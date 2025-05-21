@@ -3,16 +3,15 @@ import { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
-  Button, 
   useTheme, 
   useMediaQuery,
   Fade
 } from '@mui/material';
 import { useAppSelector } from '../../../store/hooks';
-import AddIcon from '@mui/icons-material/Add';
-import AddSprintModal from '../../sprints/components/AddSprintModal';
 import Header from '../../../shared/components/Header';
 import TaskTreeView from '../../tasks/components/TaskTreeView';
+import TaskButton from '../../tasks/components/TaskButton';
+import SprintButton from '../../sprints/components/SprintButton';
 
 function Dashboard() {
   const { name } = useAppSelector(state => state.user);
@@ -21,10 +20,7 @@ function Dashboard() {
   
   // Animation control state for UI elements
   const [contentVisible, setContentVisible] = useState(false);
-  
-  // Sprint ekleme modal'ı için state'ler
-  const [openSprintModal, setOpenSprintModal] = useState(false);
-  const [isAddingSprint, setIsAddingSprint] = useState(false);
+  const [refreshTasks, setRefreshTasks] = useState(false);
   
   // Animate content on load
   useEffect(() => {
@@ -35,25 +31,14 @@ function Dashboard() {
     return () => clearTimeout(timer);
   }, []);
   
-  // Modal açma/kapama işlevleri
-  const handleOpenSprintModal = () => setOpenSprintModal(true);
-  const handleCloseSprintModal = () => setOpenSprintModal(false);
+  // Function to refresh tasks when a new task is added
+  const handleTaskAdded = () => {
+    setRefreshTasks(prev => !prev); // Toggle to trigger useEffect in TaskTreeView
+  };
   
-  // Yeni sprint ekleme fonksiyonu
-  const handleAddSprint = async (sprintName: string) => {
-    if (!sprintName.trim()) return;
-    
-    setIsAddingSprint(true);
-    
-    try {
-      // Sprint ekleme işlemi başarılı
-      setIsAddingSprint(false);
-      // Modal'ı kapat
-      handleCloseSprintModal();
-    } catch (error) {
-      console.error('Sprint ekleme hatası:', error);
-      setIsAddingSprint(false);
-    }
+  // Function to refresh tasks when a new sprint is added
+  const handleSprintAdded = () => {
+    setRefreshTasks(prev => !prev); // Toggle to trigger useEffect in TaskTreeView
   };
 
   return (
@@ -101,70 +86,80 @@ function Dashboard() {
             zIndex: 1
           }}
         >
-          {/* Sprint Ekle Butonu - En üstte sağda, modernize edildi */}
+          {/* Welcome message at the top */}
           <Fade in={contentVisible} timeout={800}>
-            <Box sx={{ 
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: '100%',
-              mb: 4,
-              mt: 1
-            }}>
+            <Box sx={{ mb: 4 }}>
               <Typography 
                 variant={isMobile ? "h6" : "h5"} 
                 sx={{ 
                   fontWeight: 600, 
                   color: 'text.primary',
-                  opacity: 0.9
+                  opacity: 0.9,
+                  textAlign: 'center'
                 }}
               >
-                Hoş Geldiniz, {name}
+                Welcome, {name}
               </Typography>
-              
-              <Button 
-                variant="contained" 
-                color="primary"
-                startIcon={<AddIcon />}
-                onClick={handleOpenSprintModal}
-                size={isMobile ? "medium" : "large"}
-                sx={{ 
-                  borderRadius: 3, 
-                  px: { xs: 2, md: 4 },
-                  py: { xs: 1, md: 1.5 },
-                  boxShadow: '0 6px 15px rgba(0,0,0,0.08)',
-                  transition: 'all 0.3s ease',
-                  background: 'linear-gradient(45deg, #2196f3 30%, #21cbf3 90%)',
-                  '&:hover': {
-                    boxShadow: '0 8px 20px rgba(33,150,243,0.2)',
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-              >
-                Sprint Ekle
-              </Button>
+            </Box>
+          </Fade>
+          
+          {/* Action Buttons Row with Tasks title in center */}
+          <Fade in={contentVisible} timeout={1000}>
+            <Box sx={{ mb: 4 }}>              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+                justifyContent: 'space-between',
+                width: '100%',
+                px: { sm: 2, md: 5, lg: 10 } // Ekran genişliği arttıkça kenarlardan daha fazla boşluk
+              }}>
+                {/* Sprint Button - Sol tarafta */}
+                <Box sx={{ 
+                  width: { xs: '100%', sm: 'auto' },
+                  display: 'flex',
+                  justifyContent: { xs: 'center', sm: 'flex-start' }
+                }}>
+                  <SprintButton 
+                    buttonText="Create Sprint" 
+                    fullWidth={isMobile} 
+                    onSprintCreated={handleSprintAdded} 
+                  />
+                </Box>
+                
+                {/* Task Button - Sağ tarafta */}
+                <Box sx={{ 
+                  width: { xs: '100%', sm: 'auto' },
+                  mt: { xs: 2, sm: 0 },
+                  display: 'flex',
+                  justifyContent: { xs: 'center', sm: 'flex-end' }
+                }}>
+                  <TaskButton 
+                    buttonText="Create Task" 
+                    fullWidth={isMobile} 
+                    onTaskAdded={handleTaskAdded} 
+                  />
+                </Box>
+              </Box>
+
             </Box>
           </Fade>
 
-          {/* Görev Listesi - Kullanıcıya özel görevleri gösterir */}
+          {/* Task Tree View - Daha geniş alan ve scroll olmadan, task sayısına göre uzayacak */}
           <Fade in={contentVisible} timeout={1200}>
             <Box sx={{ 
-              mt: 4,
-              width: '100%'
+              width: '100%',
+              mt: { xs: 2, sm: 3 },
+              pb: 6, // Sayfa sonunda ekstra padding
+              px: { xs: 0, sm: 1 }, // Yanlarda ekstra boşluk
+              display: 'flex',
+              flexDirection: 'column',
+              flexGrow: 1
             }}>
-              <TaskTreeView />
+              <TaskTreeView refreshTrigger={refreshTasks} />
             </Box>
           </Fade>
         </Box>
       </Box>
-
-      {/* Sprint Ekleme Modal'ı */}
-      <AddSprintModal 
-        open={openSprintModal} 
-        onClose={handleCloseSprintModal} 
-        onAdd={handleAddSprint}
-        isAdding={isAddingSprint}
-      />
     </>
   );
 }

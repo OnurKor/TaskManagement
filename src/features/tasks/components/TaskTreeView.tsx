@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
-  Button, 
+  Button,
   Paper,
   CircularProgress,
   Chip,
@@ -17,7 +17,6 @@ import {
   useTheme
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
-import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FolderIcon from '@mui/icons-material/Folder';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -68,17 +67,7 @@ const ChildTaskCard = styled(Card)(({ theme }) => ({
   }
 }));
 
-// Custom styling for the connector line
-const ConnectorLine = styled(Box)(({ theme }) => ({
-  position: 'absolute',
-  left: 16,
-  top: 0,
-  bottom: 0,
-  width: 1,
-  backgroundColor: theme.palette.divider,
-  opacity: 0.6,
-  zIndex: 0
-}));
+// TaskNode styling is handled inline
 
 // Custom Expand IconButton with rotation
 interface ExpandIconProps {
@@ -120,9 +109,7 @@ const TaskNode = ({
   getUserName,
   getUserInitial,
   getStatusColor,
-  getAvatarColor,
-  isFirstChild = false,
-  isLastChild = false
+  getAvatarColor
 }: TaskNodeProps) => {
   const [expanded, setExpanded] = useState(false);
   const hasChildren = task.children && task.children.length > 0;
@@ -302,7 +289,11 @@ const TaskNode = ({
   );
 };
 
-const TaskTreeView = () => {
+interface TaskTreeViewProps {
+  refreshTrigger?: boolean;
+}
+
+const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
   const [tasks, setTasks] = useState<TaskWithChildren[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [sprints, setSprints] = useState<any[]>([]);
@@ -310,14 +301,15 @@ const TaskTreeView = () => {
   const [openTaskModal, setOpenTaskModal] = useState(false);
   
   // Pagination state
-  const [visibleTaskCount, setVisibleTaskCount] = useState(5);
+  const [visibleTaskCount, setVisibleTaskCount] = useState(5); // Başlangıçta sadece 5 task göster
   const [hasMoreTasks, setHasMoreTasks] = useState(false);
   
   const taskService = useTaskService();
   
   useEffect(() => {
     fetchData();
-  }, []);
+    // refreshTrigger değiştiğinde mevcut görünür task sayısını ve görünürlük durumunu koru
+  }, [refreshTrigger]); // Refresh when refreshTrigger changes
   
   const fetchData = async () => {
     setLoading(true);
@@ -330,6 +322,7 @@ const TaskTreeView = () => {
         setTasks(organizedTasks);
         // Check if we have more tasks than the visible count
         setHasMoreTasks(organizedTasks.length > visibleTaskCount);
+        console.log(`Loaded ${organizedTasks.length} tasks, showing ${visibleTaskCount}, has more: ${organizedTasks.length > visibleTaskCount}`);
       }
       
       // Fetch users for displaying names
@@ -359,11 +352,16 @@ const TaskTreeView = () => {
     setHasMoreTasks(tasks.length > newCount);
   };
   
-  const handleOpenTaskModal = () => setOpenTaskModal(true);
   const handleCloseTaskModal = () => setOpenTaskModal(false);
   
   const handleAddTask = async (_task: Task) => {
+    // Task eklendiğinde, halihazırda görünen task sayısını hatırla
+    const currentVisibleCount = visibleTaskCount;
     await fetchData(); // Refresh tasks after adding
+    // Eğer tüm tasklar görünüyorsa (Add More yoksa), yeni eklenen task'ı da göster
+    if (!hasMoreTasks) {
+      setVisibleTaskCount(currentVisibleCount + 1);
+    }
   };
   
   // Helper function to get sprint name by id
@@ -427,36 +425,8 @@ const TaskTreeView = () => {
   };
 
   return (
-    <Box sx={{ mt: 4 }}>
-      <Box sx={{ 
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        mb: 3
-      }}>
-        <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
-          Görevler
-        </Typography>
-        
-        <Button 
-          variant="contained" 
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleOpenTaskModal}
-          sx={{ 
-            borderRadius: 2, 
-            px: 3,
-            boxShadow: '0 4px 10px rgba(0,0,0,0.08)',
-            background: 'linear-gradient(45deg, #2196f3 30%, #21cbf3 90%)',
-            '&:hover': {
-              boxShadow: '0 6px 10px rgba(0,0,0,0.15)',
-              transform: 'translateY(-1px)'
-            }
-          }}
-        >
-          Task Ekle
-        </Button>
-      </Box>
+    <Box sx={{ mt: 0, width: '100%' }}>
+      {/* Task header removed and moved to Dashboard */}
       
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
@@ -484,9 +454,7 @@ const TaskTreeView = () => {
           }}
         >
           <Box sx={{ 
-            flexGrow: 1, 
-            overflowY: 'auto', 
-            maxHeight: 'calc(100vh - 200px)'
+            flexGrow: 1
           }}>
             {tasks.slice(0, visibleTaskCount).map((task) => (
               <TaskNode
@@ -502,15 +470,23 @@ const TaskTreeView = () => {
             ))}
             
             {hasMoreTasks && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 1 }}>
                 <Button 
                   variant="outlined"
                   color="primary"
                   onClick={handleLoadMore}
                   sx={{ 
-                    borderRadius: 2,
+                    borderRadius: 3,
                     textTransform: 'none',
-                    px: 3
+                    px: 4,
+                    py: 1,
+                    minWidth: '150px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      transform: 'translateY(-2px)'
+                    }
                   }}
                 >
                   Add More

@@ -1,4 +1,3 @@
-// filepath: /Users/onurkordogan/Desktop/TaskManagement/src/features/sprints/components/AddSprintModal.tsx
 import { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -13,11 +12,12 @@ import {
   useMediaQuery,
   useTheme,
   Fade,
-  CircularProgress,
-  FormHelperText
+  CircularProgress
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import { useFormik } from 'formik';
+import * as yup from 'yup';
 
 interface AddSprintModalProps {
   open: boolean;
@@ -26,13 +26,33 @@ interface AddSprintModalProps {
   isAdding: boolean;
 }
 
+// Validation schema for sprint form
+const validationSchema = yup.object({
+  sprintName: yup
+    .string()
+    .required('Sprint adı gereklidir')
+    .min(3, 'Sprint adı en az 3 karakter olmalıdır')
+    .max(50, 'Sprint adı 50 karakterden az olmalıdır')
+    .trim()
+});
+
 const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps) => {
-  const [sprintName, setSprintName] = useState('');
-  const [error, setError] = useState('');
   const [animate, setAnimate] = useState(false);
-  
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  // Setup formik
+  const formik = useFormik({
+    initialValues: {
+      sprintName: '',
+    },
+    validationSchema: validationSchema,
+    onSubmit: async (values) => {
+      await onAdd(values.sprintName);
+    },
+    validateOnBlur: true,
+    validateOnChange: true,
+  });
 
   // Animation timing
   useEffect(() => {
@@ -45,33 +65,22 @@ const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps)
     return () => clearTimeout(timer);
   }, [open]);
 
-  // Reset error when name changes
+  // Reset form when modal closes
   useEffect(() => {
-    if (error && sprintName.trim()) {
-      setError('');
+    if (!open) {
+      formik.resetForm();
     }
-  }, [sprintName, error]);
-
-  const handleAdd = async () => {
-    if (!sprintName.trim()) {
-      setError('Sprint adı boş olamaz');
-      return;
-    }
-    
-    await onAdd(sprintName);
-    setSprintName('');
-  };
+  }, [open]);
 
   const handleClose = () => {
-    setSprintName('');
-    setError('');
+    formik.resetForm();
     onClose();
   };
   
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && sprintName.trim() && !isAdding) {
+    if (e.key === 'Enter' && formik.values.sprintName.trim() && !isAdding && !formik.errors.sprintName) {
       e.preventDefault();
-      handleAdd();
+      formik.handleSubmit();
     }
   };
 
@@ -92,7 +101,7 @@ const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps)
       TransitionProps={{
         onExited: () => {
           setAnimate(false);
-          setError('');
+          formik.resetForm();
         }
       }}
     >
@@ -141,16 +150,19 @@ const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps)
             type="text"
             fullWidth
             variant="outlined"
-            value={sprintName}
-            onChange={(e) => setSprintName(e.target.value)}
+            name="sprintName"
+            value={formik.values.sprintName}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             onKeyPress={handleKeyPress}
             disabled={isAdding}
-            error={!!error}
+            error={formik.touched.sprintName && Boolean(formik.errors.sprintName)}
+            helperText={formik.touched.sprintName && formik.errors.sprintName}
             sx={{
               '& .MuiInputBase-root': {
                 borderRadius: 2
               },
-              mb: error ? 0 : 1
+              mb: (formik.touched.sprintName && Boolean(formik.errors.sprintName)) ? 0 : 1
             }}
             InputProps={{
               sx: {
@@ -158,12 +170,6 @@ const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps)
               }
             }}
           />
-          
-          {error && (
-            <FormHelperText error sx={{ ml: 2, mt: 0.5, mb: 1 }}>
-              {error}
-            </FormHelperText>
-          )}
           
           <Typography 
             variant="body2" 
@@ -195,10 +201,10 @@ const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps)
             İptal
           </Button>
           <Button 
-            onClick={handleAdd} 
+            onClick={() => formik.handleSubmit()}
             variant="contained" 
             color="primary"
-            disabled={!sprintName.trim() || isAdding}
+            disabled={!formik.values.sprintName.trim() || isAdding || Boolean(formik.errors.sprintName)}
             startIcon={isAdding ? 
               <CircularProgress size={16} color="inherit" /> : 
               <AddCircleOutlineIcon />
