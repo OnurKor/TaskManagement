@@ -20,7 +20,7 @@ import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import SecurityIcon from '@mui/icons-material/Security';
 import AddSprintModal from '../../sprints/components/AddSprintModal';
 import Header from '../../../shared/components/Header';
-import TaskList from '../../tasks/components/TaskList';
+import TaskTreeView from '../../tasks/components/TaskTreeView';
 
 function Dashboard() {
   const { name, surname, email, isLoggedIn, accessToken, expiresAt } = useAppSelector(state => state.user);
@@ -341,7 +341,7 @@ function Dashboard() {
               mt: 4,
               width: '100%'
             }}>
-              <TaskList />
+              <TaskTreeView />
             </Box>
           </Fade>
         </Container>

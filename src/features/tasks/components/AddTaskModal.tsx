@@ -61,7 +61,14 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { fetchUsers, fetchSprints, fetchTasks, addTask } = useTaskService();
+  const { 
+    fetchUsers, 
+    fetchSprints, 
+    fetchTasks, 
+    addTask, 
+    canBeParent, 
+    hasMaxChildren
+  } = useTaskService();
 
   // Animation timing
   useEffect(() => {
@@ -86,7 +93,6 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
       
       // Fetch sprints
       const sprintsResponse = await fetchSprints();
-      console.log("Sprints Response:", sprintsResponse);
       if (sprintsResponse && sprintsResponse.data) {
         setSprints(sprintsResponse.data);
       }
@@ -94,7 +100,12 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
       // Fetch tasks for parent selection
       const tasksResponse = await fetchTasks();
       if (tasksResponse && tasksResponse.data) {
-        setTasks(tasksResponse.data);
+        // Filter tasks that can be parents for selection
+        const allTasks = tasksResponse.data;
+        const availableParents = allTasks.filter((task: Task) => 
+          canBeParent(task, allTasks) && !hasMaxChildren(task.id as number, allTasks)
+        );
+        setTasks(availableParents);
       }
     } catch (error) {
       console.error('Data loading error:', error);
@@ -352,7 +363,6 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                           const selectedValue = e.target.value as string | number;
                           setFieldValue('ParentID', selectedValue === '' ? null : Number(selectedValue));
                         }}
-                      
                         disabled={isSubmitting || tasks.length === 0}
                         label="Üst Görev (Opsiyonel)"
                         sx={{
@@ -362,15 +372,23 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                         <MenuItem value="">
                           <em>Üst görev yok</em>
                         </MenuItem>
-                        {tasks.map((task) => (
-                          <MenuItem key={task.id} value={task.id}>
-                            {task.TaskName}
+                        {tasks.length === 0 ? (
+                          <MenuItem disabled value="no-parent-available">
+                            <em>Uygun üst görev bulunmamaktadır</em>
                           </MenuItem>
-                        ))}
+                        ) : (
+                          tasks.map((task) => (
+                            <MenuItem key={task.id} value={task.id}>
+                              {task.TaskName}
+                            </MenuItem>
+                          ))
+                        )}
                       </Select>
-                      {touched.ParentID && errors.ParentID && (
-                        <FormHelperText>{errors.ParentID as string}</FormHelperText>
-                      )}
+                      <FormHelperText>
+                        {touched.ParentID && errors.ParentID 
+                          ? errors.ParentID as string 
+                          : 'Maksimum 2 seviye hiyerarşiye izin verilir'}
+                      </FormHelperText>
                     </FormControl>
                   </Box>
                   
