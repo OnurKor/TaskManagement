@@ -20,6 +20,7 @@ import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import SecurityIcon from '@mui/icons-material/Security';
 import AddSprintModal from '../../sprints/components/AddSprintModal';
 import Header from '../../../shared/components/Header';
+import TaskList from '../../tasks/components/TaskList';
 
 function Dashboard() {
   const { name, surname, email, isLoggedIn, accessToken, expiresAt } = useAppSelector(state => state.user);
@@ -333,6 +334,16 @@ function Dashboard() {
               </Box>
             </Fade>
           )}
+
+          {/* Görev Listesi - Kullanıcıya özel görevleri gösterir */}
+          <Fade in={contentVisible} timeout={1200}>
+            <Box sx={{ 
+              mt: 4,
+              width: '100%'
+            }}>
+              <TaskList />
+            </Box>
+          </Fade>
         </Container>
       </Box>
 
