@@ -5,6 +5,7 @@ import { useAppSelector } from '../../../store/hooks';
 import { signOut } from '../../auth/services/authService';
 import AddIcon from '@mui/icons-material/Add';
 import AddSprintModal from '../../sprints/components/AddSprintModal';
+import Header from '../../../shared/components/Header';
 
 function Dashboard() {
   const { name, surname, email, isLoggedIn, accessToken, expiresAt } = useAppSelector(state => state.user);
@@ -59,6 +60,7 @@ function Dashboard() {
 
   return (
     <>
+      <Header />
       <Container maxWidth="lg" sx={{ mt: 4 }}>
         <Box sx={{ 
           py: 4,
@@ -66,7 +68,7 @@ function Dashboard() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: '80vh'
+          minHeight: 'calc(100vh - 80px)'
         }}>
           <Box sx={{ 
             display: 'flex', 
@@ -74,10 +76,11 @@ function Dashboard() {
             alignItems: 'center', 
             width: '100%', 
             maxWidth: 400,
-            mb: 2
+            mb: 4,
+            mt: { xs: 2, sm: 4 }
           }}>
-            <Typography variant="h2" component="h1" sx={{ fontSize: { xs: '2.5rem', sm: '3rem' } }}>
-              Görev Yönetimi
+            <Typography variant="h5" component="h1" sx={{ fontWeight: 500 }}>
+              Dashboard
             </Typography>
             <Button 
               variant="contained" 
@@ -90,12 +93,6 @@ function Dashboard() {
               Sprint Ekle
             </Button>
           </Box>
-          <Typography variant="h5" component="h2" color="text.secondary" gutterBottom>
-            Yapım Aşamasında
-          </Typography>
-          <Typography variant="body1" sx={{ mt: 2, textAlign: 'center' }}>
-            Uygulama geliştirme devam ediyor. Şu an sadece giriş ve kayıt sayfaları kullanılabilir.
-          </Typography>
 
           {isLoggedIn && (
             <>
