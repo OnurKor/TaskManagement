@@ -2,29 +2,20 @@
 import { useState, useEffect } from 'react';
 import { 
   Box, 
-  Container, 
   Typography, 
-  Paper, 
-  Divider, 
   Button, 
   useTheme, 
   useMediaQuery,
-  Fade,
-  Chip
+  Fade
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../store/hooks';
-import { signOut } from '../../auth/services/authService';
 import AddIcon from '@mui/icons-material/Add';
-import AccountBoxIcon from '@mui/icons-material/AccountBox';
-import SecurityIcon from '@mui/icons-material/Security';
 import AddSprintModal from '../../sprints/components/AddSprintModal';
 import Header from '../../../shared/components/Header';
 import TaskTreeView from '../../tasks/components/TaskTreeView';
 
 function Dashboard() {
-  const { name, surname, email, isLoggedIn, accessToken, expiresAt } = useAppSelector(state => state.user);
-  const navigate = useNavigate();
+  const { name } = useAppSelector(state => state.user);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
@@ -43,36 +34,6 @@ function Dashboard() {
     
     return () => clearTimeout(timer);
   }, []);
-  
-  // Token süresini hesapla
-  let tokenStatus = 'Bilinmiyor';
-  let tokenStatusColor = 'default';
-  
-  if (expiresAt) {
-    const currentTime = Math.floor(Date.now() / 1000);
-    const remainingTime = expiresAt - currentTime;
-    
-    if (remainingTime > 3600) {
-      tokenStatus = `${Math.floor(remainingTime / 3600)} saat ${Math.floor((remainingTime % 3600) / 60)} dk.`;
-      tokenStatusColor = 'success';
-    } else if (remainingTime > 600) {  // 10 dakikadan fazla
-      tokenStatus = `${Math.floor(remainingTime / 60)} dakika`;
-      tokenStatusColor = 'success';
-    } else if (remainingTime > 0) {
-      tokenStatus = `${Math.floor(remainingTime / 60)} dakika`;
-      tokenStatusColor = 'warning';
-    } else {
-      tokenStatus = 'Yenileniyor';
-      tokenStatusColor = 'error';
-    }
-  }
-  
-  const handleLogout = async () => {
-    const success = await signOut();
-    if (success) {
-      navigate('/login');
-    }
-  };
   
   // Modal açma/kapama işlevleri
   const handleOpenSprintModal = () => setOpenSprintModal(true);
@@ -131,9 +92,9 @@ function Dashboard() {
           zIndex: 0
         }} />
         
-        <Container 
-          maxWidth="lg" 
+        <Box 
           sx={{ 
+            width: '100%',
             py: { xs: 3, sm: 4, md: 5 },
             px: { xs: 2, sm: 3, md: 4 },
             position: 'relative',
@@ -185,156 +146,6 @@ function Dashboard() {
             </Box>
           </Fade>
 
-          {isLoggedIn && (
-            <Fade in={contentVisible} timeout={1000}>
-              <Box sx={{ 
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                gap: 3
-              }}>
-                {/* Kullanıcı Bilgileri Kartı */}
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    p: { xs: 2.5, sm: 3 }, 
-                    borderRadius: 3,
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
-                    mb: { xs: 3, md: 0 },
-                    background: 'linear-gradient(to bottom, #ffffff, #f9f9f9)',
-                    height: 'fit-content',
-                  }}
-                >
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    mb: 2.5
-                  }}>
-                    <AccountBoxIcon color="primary" sx={{ mr: 1.5, fontSize: 28 }} />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      Kullanıcı Bilgileri
-                    </Typography>
-                  </Box>
-                  <Divider sx={{ mb: 3 }} />
-                  
-                  <Box 
-                    sx={{ 
-                      display: 'grid',
-                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                      gap: 3,
-                      mb: 3
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Ad</Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>{name || '–'}</Typography>
-                    </Box>
-                    
-                    <Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Soyad</Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>{surname || '–'}</Typography>
-                    </Box>
-                    
-                    <Box sx={{ gridColumn: { xs: '1', sm: 'span 2' }}}>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>E-posta</Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 500 }}>{email || '–'}</Typography>
-                    </Box>
-                  </Box>
-                  
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button 
-                      variant="outlined" 
-                      color="secondary" 
-                      onClick={handleLogout}
-                      sx={{ 
-                        borderRadius: 2.5,
-                        px: 3,
-                        textTransform: 'none',
-                        fontWeight: 500
-                      }}
-                    >
-                      Çıkış Yap
-                    </Button>
-                  </Box>
-                </Paper>
-                
-                {/* Token Bilgileri Kartı */}
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    p: { xs: 2.5, sm: 3 }, 
-                    borderRadius: 3,
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
-                    background: 'linear-gradient(to bottom, #ffffff, #f9f9f9)',
-                    height: 'fit-content'
-                  }}
-                >
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    mb: 2.5
-                  }}>
-                    <SecurityIcon color="primary" sx={{ mr: 1.5, fontSize: 28 }} />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      Oturum Bilgileri
-                    </Typography>
-                  </Box>
-                  <Divider sx={{ mb: 3 }} />
-                  
-                  <Box sx={{ mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
-                        Token Durumu
-                      </Typography>
-                      <Chip 
-                        label={tokenStatus} 
-                        color={tokenStatusColor as any} 
-                        size="small"
-                        variant="outlined"
-                        sx={{ fontWeight: 500 }}
-                      />
-                    </Box>
-                    
-                    <Box sx={{ 
-                      backgroundColor: 'rgba(0, 0, 0, 0.02)', 
-                      p: 2, 
-                      borderRadius: 2,
-                      border: '1px solid rgba(0, 0, 0, 0.05)',
-                    }}>
-                      <Typography variant="body2" color="text.secondary" 
-                        sx={{ 
-                          mb: 1,  
-                          fontSize: '0.85rem', 
-                          fontFamily: 'monospace', 
-                          wordBreak: 'break-all' 
-                        }}
-                      >
-                        {accessToken ? accessToken.substring(0, 25) + '...' : 'Token bilgisi yok'}
-                      </Typography>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        mt: 1.5
-                      }}>
-                        <Box 
-                          sx={{ 
-                            width: 8, 
-                            height: 8, 
-                            borderRadius: '50%', 
-                            bgcolor: 'success.main',
-                            mr: 1
-                          }} 
-                        />
-                        <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                          Oturum açık (otomatik yenileme aktif)
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </Paper>
-              </Box>
-            </Fade>
-          )}
-
           {/* Görev Listesi - Kullanıcıya özel görevleri gösterir */}
           <Fade in={contentVisible} timeout={1200}>
             <Box sx={{ 
@@ -344,7 +155,7 @@ function Dashboard() {
               <TaskTreeView />
             </Box>
           </Fade>
-        </Container>
+        </Box>
       </Box>
 
       {/* Sprint Ekleme Modal'ı */}
