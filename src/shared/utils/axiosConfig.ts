@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
-import { store } from '../redux/store';
-import { refreshTokenSuccess, clearUser } from '../redux/slices/userSlice';
+import { store } from '../../store/store';
+import { refreshTokenSuccess, clearUser } from '../../store/slices/userSlice';
 import { supabase } from './supabaseClient';
 
 // Axios instance'ını oluştur

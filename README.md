@@ -1,54 +1,95 @@
-# React + TypeScript + Vite
+# Task Management Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern task management application built with React, TypeScript, and Vite. The application uses a feature-based architecture for better organization and maintainability.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- User authentication with Supabase
+- Sprint management
+- Dashboard for task overview
+- Clean, modern UI with Material-UI
 
-## Expanding the ESLint configuration
+## Architecture
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+This project uses a feature-based architecture where code is organized by feature rather than by type:
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```
+src/
+  ├── features/            # Feature modules
+  │   ├── auth/            # Authentication feature
+  │   ├── dashboard/       # Dashboard feature
+  │   └── sprints/         # Sprints feature
+  ├── shared/              # Shared code across features
+  ├── store/               # Redux store configuration
+  └── routes/              # Routing configuration
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Getting Started
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
+- Node.js 16+
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file with your Supabase credentials:
+   ```
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+### Development
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+### Building for Production
+
+```bash
+npm run build
+```
+
+## Project Structure Guidelines
+
+When working on this project, please follow these guidelines:
+
+### Adding New Features
+
+1. Create a new directory under `src/features/` for your feature
+2. Organize your feature with subdirectories:
+   - `components/` - UI components specific to this feature
+   - `pages/` - Page components
+   - `services/` - API services and business logic
+   - `hooks/` - Feature-specific hooks
+   - `utils/` - Utility functions
+
+### Shared Code
+
+If code is used by multiple features:
+1. Move it to the appropriate directory under `src/shared/`
+2. Update imports in the dependent features
+
+### State Management
+
+For global state:
+1. Create slices in `src/store/slices/`
+2. Use the hooks in `src/store/hooks.ts` to access the store
+
+## Documentation
+
+For more detailed information about the project structure and architecture, refer to:
+- [Refactoring Documentation](./refactoring-documentation.md)
+- [Migration Plan](./migration-plan.md)
+- [Refactoring Summary](./refactoring-summary.md)
   },
 })
 ```

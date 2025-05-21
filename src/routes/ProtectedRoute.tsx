@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAppSelector } from '../redux/hooks';
-import { checkSession } from '../utils/authHelper';
-import LoadingAuth from '../components/LoadingAuth';
+import { useAppSelector } from '../store/hooks';
+import { checkSession } from '../features/auth/services/authService';
+import LoadingAuth from '../shared/components/LoadingAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

@@ -1,17 +1,10 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import App from '../App';
-import Login from '../pages/auth/Login';
-import Register from '../pages/auth/Register';
+import Dashboard from '../features/dashboard/pages/Dashboard';
+import Login from '../features/auth/pages/Login';
+import Register from '../features/auth/pages/Register';
 import ProtectedRoute from './ProtectedRoute';
-import { useEffect } from 'react';
-import { checkSession } from '../utils/authHelper';
 
 const AppRouter = () => {
-  // Uygulama başlatıldığında oturum durumunu kontrol et
-  useEffect(() => {
-    checkSession();
-  }, []);
-
   const router = createBrowserRouter([
     {
       path: '/',
@@ -19,7 +12,7 @@ const AppRouter = () => {
     },
     {
       path: '/home',
-      element: <ProtectedRoute><App /></ProtectedRoute>,
+      element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
     },
     {
       path: '/login',

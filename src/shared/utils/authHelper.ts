@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient';
-import { store } from '../redux/store';
-import { setUser, clearUser } from '../redux/slices/userSlice';
+import { store } from '../../store/store';
+import { setUser, clearUser } from '../../store/slices/userSlice';
 
 // Mevcut oturum durumunu kontrol et
 export const checkSession = async () => {

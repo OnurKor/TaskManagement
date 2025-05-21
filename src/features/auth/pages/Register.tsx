@@ -3,9 +3,9 @@ import { TextField, Button, Typography, Box, Link, Container, Alert } from '@mui
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { supabase } from '../../utils/supabaseClient';
-import { useAppDispatch } from '../../redux/hooks';
-import { setUser } from '../../redux/slices/userSlice';
+import { supabase } from '../../../shared/utils/supabaseClient';
+import { useAppDispatch } from '../../../store/hooks';
+import { setUser } from '../../../store/slices/userSlice';
 
 const validationSchema = Yup.object({
   name: Yup.string()
