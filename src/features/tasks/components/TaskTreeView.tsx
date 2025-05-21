@@ -309,6 +309,10 @@ const TaskTreeView = () => {
   const [loading, setLoading] = useState(false);
   const [openTaskModal, setOpenTaskModal] = useState(false);
   
+  // Pagination state
+  const [visibleTaskCount, setVisibleTaskCount] = useState(5);
+  const [hasMoreTasks, setHasMoreTasks] = useState(false);
+  
   const taskService = useTaskService();
   
   useEffect(() => {
@@ -324,6 +328,8 @@ const TaskTreeView = () => {
         // Use the enhanced organizeTasks method from taskService
         const organizedTasks = taskService.organizeTasks(tasksResponse.data);
         setTasks(organizedTasks);
+        // Check if we have more tasks than the visible count
+        setHasMoreTasks(organizedTasks.length > visibleTaskCount);
       }
       
       // Fetch users for displaying names
@@ -342,6 +348,15 @@ const TaskTreeView = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle loading more tasks
+  const handleLoadMore = () => {
+    // Add 5 more tasks to visible count
+    const newCount = visibleTaskCount + 5;
+    setVisibleTaskCount(newCount);
+    // Check if we still have more tasks after loading
+    setHasMoreTasks(tasks.length > newCount);
   };
   
   const handleOpenTaskModal = () => setOpenTaskModal(true);
@@ -473,7 +488,7 @@ const TaskTreeView = () => {
             overflowY: 'auto', 
             maxHeight: 'calc(100vh - 200px)'
           }}>
-            {tasks.map((task) => (
+            {tasks.slice(0, visibleTaskCount).map((task) => (
               <TaskNode
                 key={task.id}
                 task={task}
@@ -485,6 +500,23 @@ const TaskTreeView = () => {
                 getAvatarColor={getAvatarColor}
               />
             ))}
+            
+            {hasMoreTasks && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 1 }}>
+                <Button 
+                  variant="outlined"
+                  color="primary"
+                  onClick={handleLoadMore}
+                  sx={{ 
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    px: 3
+                  }}
+                >
+                  Add More
+                </Button>
+              </Box>
+            )}
           </Box>
         </Paper>
       )}

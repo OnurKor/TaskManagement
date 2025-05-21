@@ -133,16 +133,8 @@ export const useTaskService = () => {
     // Calculate estimated hours for parent tasks
     calculateHours(rootTasks);
     
-    // Sort tasks - parents first, then by name
+    // Sort tasks by name (alphabetical order)
     return rootTasks.sort((a, b) => {
-      // First sort by whether they have children (parents first)
-      const aHasChildren = a.children && a.children.length > 0;
-      const bHasChildren = b.children && b.children.length > 0;
-      
-      if (aHasChildren && !bHasChildren) return -1;
-      if (!aHasChildren && bHasChildren) return 1;
-      
-      // Then sort by task name
       return a.TaskName.localeCompare(b.TaskName);
     });
   };
