@@ -9,11 +9,11 @@ import { setUser } from '../../../store/slices/userSlice';
 
 const validationSchema = Yup.object({
   email: Yup.string()
-    .email('Geçerli bir email adresi giriniz')
-    .required('Email zorunludur'),
+    .email('Please enter a valid email address')
+    .required('Email is required'),
   password: Yup.string()
-    .min(6, 'Şifre en az 6 karakter olmalıdır')
-    .required('Şifre zorunludur'),
+    .min(6, 'Password must be at least 6 characters')
+    .required('Password is required'),
 });
 
 const Login: React.FC = () => {
@@ -65,7 +65,7 @@ const Login: React.FC = () => {
           navigate('/home');
         }
       } catch (error: any) {
-        setError(error.message || 'Giriş yapılırken bir hata oluştu.');
+        setError(error.message || 'An error occurred during sign in. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -84,18 +84,43 @@ const Login: React.FC = () => {
           boxShadow: 3,
         }}
       >
-        {/* Sol taraf - Görsel kısmı */}
+        {/* Left side - Visual section with task management themed image */}
         <Box
           sx={{
             width: { xs: 0, sm: '40%', md: '55%' },
-            backgroundImage: 'url(https://source.unsplash.com/random?productivity,workspace)',
+            backgroundImage: 'url(https://images.unsplash.com/photo-1572025442646-866d16c84a54?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1400&q=80)',
             backgroundRepeat: 'no-repeat',
             backgroundColor: (t) => t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            display: { xs: 'none', sm: 'block' }
+            display: { xs: 'none', sm: 'block' },
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            },
           }}
-        />
+        >
+          <Box sx={{ 
+            position: 'absolute', 
+            bottom: 40, 
+            left: 40, 
+            color: 'white',
+            zIndex: 2
+          }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+              Task Management
+            </Typography>
+            <Typography variant="body1">
+              Organize your tasks efficiently and boost your productivity
+            </Typography>
+          </Box>
+        </Box>
         
         {/* Sağ taraf - Form kısmı */}
         <Box
@@ -116,10 +141,10 @@ const Login: React.FC = () => {
             }}
           >
             <Typography component="h1" variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
-              Hoş Geldiniz
+              Welcome Back
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-              Hesabınıza giriş yapın
+              Sign in to your account to manage your tasks
             </Typography>
             
             <Box component="form" noValidate onSubmit={formik.handleSubmit} sx={{ width: '100%' }}>
@@ -128,7 +153,7 @@ const Login: React.FC = () => {
                 required
                 fullWidth
                 id="email"
-                label="Email Adresi"
+                label="Email Address"
                 name="email"
                 autoComplete="email"
                 autoFocus
@@ -145,17 +170,18 @@ const Login: React.FC = () => {
                 required
                 fullWidth
                 name="password"
-                label="Şifre"
+                label="Password"
                 type="password"
                 id="password"
                 autoComplete="current-password"
-                variant="outlined"            value={formik.values.password}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.password && Boolean(formik.errors.password)}
-            helperText={formik.touched.password && formik.errors.password}
-            sx={{ mb: 3 }}
-          />
+                variant="outlined"
+                value={formik.values.password}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.password && Boolean(formik.errors.password)}
+                helperText={formik.touched.password && formik.errors.password}
+                sx={{ mb: 3 }}
+              />
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
@@ -173,15 +199,21 @@ const Login: React.FC = () => {
               py: 1.5,
               borderRadius: 2,
               textTransform: 'none',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              background: !loading ? 'linear-gradient(90deg, #2196f3 0%, #21cbf3 100%)' : undefined,
+              boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
+              '&:hover': {
+                background: 'linear-gradient(90deg, #1e88e5 0%, #00b8d4 100%)',
+                boxShadow: '0 6px 20px rgba(33, 150, 243, 0.4)',
+              }
             }}
           >
-            {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
+            {loading ? 'Signing in...' : 'Sign In'}
               </Button>
               
               <Box sx={{ textAlign: 'center' }}>
                 <Link component={RouterLink} to="/register" variant="body2" underline="hover">
-                  Hesabınız yok mu? Kayıt olun
+                  Don't have an account? Register now
                 </Link>
               </Box>
             </Box>

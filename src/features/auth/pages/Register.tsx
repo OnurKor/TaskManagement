@@ -9,18 +9,18 @@ import { setUser } from '../../../store/slices/userSlice';
 
 const validationSchema = Yup.object({
   name: Yup.string()
-    .required('İsim zorunludur'),
+    .required('First name is required'),
   surname: Yup.string()
-    .required('Soyisim zorunludur'),
+    .required('Last name is required'),
   email: Yup.string()
-    .email('Geçerli bir email adresi giriniz')
-    .required('Email zorunludur'),
+    .email('Please enter a valid email address')
+    .required('Email is required'),
   password: Yup.string()
-    .min(6, 'Şifre en az 6 karakter olmalıdır')
-    .required('Şifre zorunludur'),
+    .min(6, 'Password must be at least 6 characters')
+    .required('Password is required'),
   confirmPassword: Yup.string()
-    .oneOf([Yup.ref('password')], 'Şifreler eşleşmiyor')
-    .required('Şifre tekrarı zorunludur'),
+    .oneOf([Yup.ref('password')], 'Passwords do not match')
+    .required('Password confirmation is required'),
 });
 
 const Register: React.FC = () => {
@@ -76,11 +76,11 @@ const Register: React.FC = () => {
           // Başarılı kayıt sonrası home sayfasına yönlendir
           navigate('/home');
         } else {
-          // Supabase bazen e-posta doğrulaması gerektirdiğinde session null olabilir
-          setError('E-posta doğrulaması gerekiyor. Lütfen e-posta kutunuzu kontrol edin.');
+          // Supabase sometimes requires email verification, in which case session would be null
+          setError('Email verification required. Please check your email inbox.');
         }
       } catch (error: any) {
-        setError(error.message || 'Kayıt olurken bir hata oluştu.');
+        setError(error.message || 'An error occurred during registration.');
       } finally {
         setLoading(false);
       }
@@ -99,18 +99,44 @@ const Register: React.FC = () => {
           boxShadow: 3,
         }}
       >
-        {/* Sol taraf - Görsel kısmı */}
+        {/* Left side - Visual section with task management themed image */}
         <Box
           sx={{
             width: { xs: 0, sm: '40%', md: '55%' },
-            backgroundImage: 'url(https://source.unsplash.com/random?collaboration,task)',
+            backgroundImage: 'url(https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1400&q=80)',
             backgroundRepeat: 'no-repeat',
             backgroundColor: (t) => t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            display: { xs: 'none', sm: 'block' }
+            display: { xs: 'none', sm: 'block' },
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            },
           }}
-        />
+        >
+          <Box sx={{ 
+            position: 'absolute', 
+            bottom: 40, 
+            left: 40, 
+            color: 'white',
+            zIndex: 2,
+            maxWidth: '80%'
+          }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+              Start Managing Your Tasks
+            </Typography>
+            <Typography variant="body1">
+              Join our platform and take control of your workflow with our powerful task management system
+            </Typography>
+          </Box>
+        </Box>
         
         {/* Sağ taraf - Form kısmı */}
         <Box
@@ -131,10 +157,10 @@ const Register: React.FC = () => {
             }}
           >
             <Typography component="h1" variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
-              Hesap Oluştur
+              Create Account
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Hemen kayıt olun ve uygulamayı kullanmaya başlayın
+              Register now and start managing your tasks efficiently
             </Typography>
             
             <Box component="form" noValidate onSubmit={formik.handleSubmit} sx={{ width: '100%' }}>
@@ -145,7 +171,7 @@ const Register: React.FC = () => {
                   required
                   fullWidth
                   id="name"
-                  label="İsim"
+                  label="First Name"
                   autoFocus
                   variant="outlined"
                   value={formik.values.name}
@@ -158,7 +184,7 @@ const Register: React.FC = () => {
                   required
                   fullWidth
                   id="surname"
-                  label="Soyisim"
+                  label="Last Name"
                   name="surname"
                   autoComplete="family-name"
                   variant="outlined"
@@ -174,7 +200,7 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 id="email"
-                label="Email Adresi"
+                label="Email Address"
                 name="email"
                 autoComplete="email"
                 variant="outlined"
@@ -190,7 +216,7 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 name="password"
-                label="Şifre"
+                label="Password"
                 type="password"
                 id="password"
                 autoComplete="new-password"
@@ -207,7 +233,7 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 name="confirmPassword"
-                label="Şifre Tekrarı"
+                label="Confirm Password"
                 type="password"
                 id="confirmPassword"
                 variant="outlined"
@@ -237,15 +263,21 @@ const Register: React.FC = () => {
                   py: 1.5,
                   borderRadius: 2,
                   textTransform: 'none',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  background: !loading ? 'linear-gradient(90deg, #2196f3 0%, #21cbf3 100%)' : undefined,
+                  boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(90deg, #1e88e5 0%, #00b8d4 100%)',
+                    boxShadow: '0 6px 20px rgba(33, 150, 243, 0.4)',
+                  }
                 }}
               >
-                {loading ? 'Kayıt Yapılıyor...' : 'Kayıt Ol'}
+                {loading ? 'Creating Account...' : 'Register'}
               </Button>
               
               <Box sx={{ textAlign: 'center' }}>
                 <Link component={RouterLink} to="/login" variant="body2" underline="hover">
-                  Zaten hesabınız var mı? Giriş yapın
+                  Already have an account? Sign in
                 </Link>
               </Box>
             </Box>
