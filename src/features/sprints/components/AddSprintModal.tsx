@@ -30,9 +30,9 @@ interface AddSprintModalProps {
 const validationSchema = yup.object({
   sprintName: yup
     .string()
-    .required('Sprint adı gereklidir')
-    .min(3, 'Sprint adı en az 3 karakter olmalıdır')
-    .max(50, 'Sprint adı 50 karakterden az olmalıdır')
+    .required('Sprint name is required')
+    .min(3, 'Sprint name must be at least 3 characters')
+    .max(50, 'Sprint name cannot exceed 50 characters')
     .trim()
 });
 
@@ -88,8 +88,10 @@ const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps)
     <Dialog 
       open={open} 
       onClose={isAdding ? undefined : handleClose}
-      maxWidth="sm" 
+      maxWidth="sm"
       fullWidth
+      aria-labelledby="add-sprint-title"
+      aria-describedby="add-sprint-description"
       PaperProps={{
         sx: {
           borderRadius: 3,
@@ -112,13 +114,15 @@ const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps)
         alignItems: 'center', 
         mb: 1 
       }}>
-        <DialogTitle sx={{ 
+        <DialogTitle 
+          id="add-sprint-title"
+          sx={{ 
           fontSize: { xs: '1.25rem', sm: '1.5rem' }, 
           fontWeight: 600,
           color: 'primary.main',
           p: { xs: 1.5, sm: 2 }
         }}>
-          Yeni Sprint
+          New Sprint
         </DialogTitle>
         <IconButton
           aria-label="close"
@@ -139,14 +143,19 @@ const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps)
 
       <Fade in={animate} timeout={300}>
         <DialogContent sx={{ px: { xs: 2, sm: 3 }, pt: 1 }}>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Yeni bir sprint oluşturmak için aşağıya sprint adını girin
+          <Typography 
+            id="add-sprint-description" 
+            variant="body1" 
+            color="text.secondary" 
+            sx={{ mb: 3 }}
+          >
+            Enter a sprint name below to create a new sprint
           </Typography>
           
           <TextField
             autoFocus
             margin="dense"
-            label="Sprint Adı"
+            label="Sprint Name"
             type="text"
             fullWidth
             variant="outlined"
@@ -181,7 +190,7 @@ const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps)
               opacity: 0.8 
             }}
           >
-            Sprint oluşturulduktan sonra işlerinizi planlayabilirsiniz
+            After creating the sprint, you can plan and manage your tasks
           </Typography>
         </DialogContent>
       </Fade>
@@ -198,7 +207,7 @@ const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps)
               fontWeight: 500
             }}
           >
-            İptal
+            Cancel
           </Button>
           <Button 
             onClick={() => formik.handleSubmit()}
@@ -219,7 +228,7 @@ const AddSprintModal = ({ open, onClose, onAdd, isAdding }: AddSprintModalProps)
               background: !isAdding ? 'linear-gradient(45deg, #2196f3 30%, #21cbf3 90%)' : undefined,
             }}
           >
-            {isAdding ? 'Ekleniyor...' : 'Oluştur'}
+            {isAdding ? 'Adding...' : 'Create'}
           </Button>
         </DialogActions>
       </Fade>
