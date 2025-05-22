@@ -6,7 +6,6 @@ import {
   DialogContentText,
   DialogTitle,
   Button,
-  Typography,
   Box
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -34,6 +33,8 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationProps> = ({
     <Dialog
       open={open}
       onClose={loading ? undefined : onClose}
+      aria-labelledby="delete-confirmation-title"
+      aria-describedby="delete-confirmation-description"
       PaperProps={{
         sx: {
           borderRadius: 2,
@@ -41,16 +42,16 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationProps> = ({
         }
       }}
     >
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <DialogTitle id="delete-confirmation-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <WarningIcon color="warning" />
-        <Typography variant="h6">Confirm Deletion</Typography>
+        Confirm Deletion
       </DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          Are you sure you want to delete the task: <Box component="span" sx={{ fontWeight: 'bold' }}>{taskName}</Box>?
-          <Box mt={1}>
-            This action cannot be undone. All related data will be permanently deleted.
-          </Box>
+        <DialogContentText id="delete-confirmation-description">
+          Are you sure you want to delete the task: <span style={{ fontWeight: 'bold' }}>{taskName}</span>?
+        </DialogContentText>
+        <DialogContentText sx={{ mt: 1 }}>
+          This action cannot be undone. All related data will be permanently deleted.
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>

@@ -206,8 +206,8 @@ const AddTaskModal = ({
     Status: 'Open',
     Description: '',
     EstimatedHour: 0,
-    SprintID: null,
-    UserID: null,
+    SprintID: "",
+    UserID: "",
     ParentID: null
   };
 

@@ -9,8 +9,8 @@ export interface Task {
   Status: 'Open' | 'Working' | 'Completed';
   Description?: string; // Rich text description
   EstimatedHour: number;
-  SprintID: number;
-  UserID: number; // Single user ID as a number
+  SprintID: number | string; // Sprint ID can be null
+  UserID: number | string; // Single user ID as a number
   ParentID?: number | null;
   hasChildren?: boolean;
 }
