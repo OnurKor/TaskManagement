@@ -38,10 +38,12 @@ const ParentTaskCard = styled(Card)(({ theme }) => ({
   backgroundColor: alpha(theme.palette.primary.light, 0.04),
   transition: 'all 0.2s ease-in-out',
   position: 'relative',
+  cursor: 'pointer',
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
     borderLeft: `4px solid ${theme.palette.primary.dark}`,
+    backgroundColor: alpha(theme.palette.primary.light, 0.08),
   },
   '&::before': {
     content: '""',
@@ -63,9 +65,11 @@ const ChildTaskCard = styled(Card)(({ theme }) => ({
   boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
   borderRadius: theme.shape.borderRadius * 2,
   transition: 'all 0.2s ease-in-out',
+  cursor: 'pointer',
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: '0 3px 8px rgba(0,0,0,0.08)',
+    backgroundColor: alpha(theme.palette.background.default, 0.7),
   }
 }));
 
@@ -157,7 +161,11 @@ interface TaskNodeProps {
     onDeleteTask(task.id as number, task.TaskName, hasChildren);
   };
   
-  const handleUpdate = () => {
+  const handleUpdate = (e: React.MouseEvent) => {
+    // Don't open update modal when clicking expand button or right-clicking
+    if (e.type === 'contextmenu') return;
+    
+    // Proceed with update
     if (onUpdateTask) {
       onUpdateTask(task);
     }
@@ -184,7 +192,8 @@ interface TaskNodeProps {
     }}>
       {/* Task Card */}
       <TaskCardComponent 
-        sx={{ ml: level * 3 }}
+        sx={{ ml: level * 3, cursor: 'pointer' }}
+        onClick={handleUpdate}
         onContextMenu={handleContextMenu}
       >
         <CardContent sx={{ pb: 1 }}>
