@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
 import FolderIcon from '@mui/icons-material/Folder';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -81,11 +82,19 @@ const ExpandIcon = ({ expanded, onClick }: ExpandIconProps) => (
     data-testid="expand-button"
     sx={{
       transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)',
-      transition: 'transform 0.2s',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       padding: 0.5,
+      color: expanded ? 'primary.main' : 'action.active',
+      '&:hover': {
+        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+        color: 'primary.main',
+      },
     }}
   >
-    <ExpandMoreIcon />
+    <ExpandCircleDownIcon sx={{ 
+      fontSize: '24px',
+      filter: expanded ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' : 'none',
+    }} />
   </IconButton>
 );
 
@@ -134,8 +143,8 @@ const TaskNode = ({
           left: level * 24 - 8,
           height: 20,
           width: 16,
-          borderLeft: `1px dashed ${theme.palette.divider}`,
-          borderBottom: `1px dashed ${theme.palette.divider}`,
+          borderLeft: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+          borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
           borderBottomLeftRadius: 8,
         }
       })
@@ -147,19 +156,33 @@ const TaskNode = ({
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               {hasChildren ? (
-                <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
+                <Box sx={{ 
+                  mr: 1, 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  position: 'relative'
+                }}>
                   <Badge 
                     badgeContent={task.children?.length || 0} 
                     color="primary"
                     sx={{ 
                       '& .MuiBadge-badge': {
                         fontSize: '0.7rem',
-                        height: 16,
-                        minWidth: 16,
+                        height: 18,
+                        minWidth: 18,
+                        fontWeight: 'bold',
+                        boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
                       }
                     }}
+                    overlap="circular"
                   >
-                    <ExpandIcon expanded={expanded} onClick={toggleExpand} />
+                    <Box sx={{ 
+                      bgcolor: expanded ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
+                      borderRadius: '50%',
+                      transition: 'background-color 0.3s ease'
+                    }}>
+                      <ExpandIcon expanded={expanded} onClick={toggleExpand} />
+                    </Box>
                   </Badge>
                 </Box>
               ) : (
@@ -261,13 +284,33 @@ const TaskNode = ({
               top: 0,
               left: level * 24 + 16,
               bottom: 12,
-              width: 1,
-              backgroundColor: theme.palette.divider,
-              opacity: 0.6
+              width: 2,
+              backgroundColor: theme.palette.primary.light,
+              opacity: 0.5,
+              borderRadius: '1px'
             }
           }}
         >
-          <Box sx={{ mt: 1 }}>
+          {/* Animasyon efekti için ek konteyner */}
+          <Box
+            sx={{
+              mt: 1,
+              pl: 1,
+              position: 'relative',
+              '&::after': expanded ? {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: level * 24 + 12,
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                backgroundColor: theme.palette.primary.light,
+                opacity: 0.5,
+                transition: 'all 0.3s ease'
+              } : {}
+            }}
+          >
             {task.children?.map((childTask, index) => (
               <TaskNode
                 key={childTask.id}
