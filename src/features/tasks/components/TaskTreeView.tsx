@@ -521,10 +521,34 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
     setDeletingTask(null);
   };
 
-  // Handler for updating a task (placeholder for future implementation)
+  // State for update modal
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [taskToUpdate, setTaskToUpdate] = useState<TaskWithChildren | null>(null);
+  
+  // Handler for initiating task update
   const handleUpdateTask = (task: TaskWithChildren) => {
-    // TODO: Implement task update functionality
-    console.log('Update task:', task);
+    setTaskToUpdate(task);
+    setUpdateModalOpen(true);
+  };
+  
+  // Handler for completing task update
+  const handleConfirmUpdate = async (_taskId: number, _updatedTask: Task) => {
+    try {
+      // Refresh the task list after successful update
+      await fetchData();
+    } catch (error) {
+      console.error('Error updating task:', error);
+      // TODO: Show error notification if needed
+    } finally {
+      setUpdateModalOpen(false);
+      setTaskToUpdate(null);
+    }
+  };
+  
+  // Handler for canceling task update
+  const handleCancelUpdate = () => {
+    setUpdateModalOpen(false);
+    setTaskToUpdate(null);
   };
   
   // Helper function to get sprint name by id
@@ -662,10 +686,21 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
         </Paper>
       )}
       
+      {/* Add Task Modal */}
       <AddTaskModal 
         open={openTaskModal} 
         onClose={handleCloseTaskModal} 
         onAdd={handleAddTask} 
+        mode="create"
+      />
+      
+      {/* Update Task Modal */}
+      <AddTaskModal
+        open={updateModalOpen}
+        onClose={handleCancelUpdate}
+        onUpdate={handleConfirmUpdate}
+        taskToUpdate={taskToUpdate}
+        mode="update"
       />
       
       {/* Delete Confirmation Modal */}

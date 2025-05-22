@@ -66,6 +66,29 @@ export const useTaskService = () => {
     });
   };
 
+  const updateTask = async (taskId: number, task: Task) => {
+    // Ensure numeric values are properly formatted
+    const formattedTask = {
+      TaskName: task.TaskName.trim(),
+      Subject: task.Subject.trim(),
+      Status: task.Status,
+      Description: task.Description || null,
+      EstimatedHour: Number(task.EstimatedHour),
+      SprintID: Number(task.SprintID),
+      UserID: Number(task.UserID),
+      ParentID: task.ParentID ? Number(task.ParentID) : null
+    };
+    
+    return await request(`Tasks?id=eq.${taskId}`, {
+      useAuth: true,
+      method: 'PATCH',
+      headers: {
+        'Prefer': 'return=representation'
+      },
+      body: formattedTask
+    });
+  };
+
   const fetchUsers = async () => {
     return await request('Users', { 
       useAuth: true
@@ -190,6 +213,7 @@ export const useTaskService = () => {
   return {
     fetchTasks,
     addTask,
+    updateTask,
     deleteTask,
     fetchUsers,
     fetchSprints,

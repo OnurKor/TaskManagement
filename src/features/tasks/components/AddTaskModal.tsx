@@ -32,30 +32,40 @@ interface AddTaskModalProps {
   open: boolean;
   onClose: () => void;
   onAdd?: (task: Task) => Promise<void>;
+  onUpdate?: (taskId: number, task: Task) => Promise<void>;
+  taskToUpdate?: Task | null;
+  mode?: 'create' | 'update';
 }
 
 // Validation schema
 const TaskSchema = Yup.object().shape({
   TaskName: Yup.string()
-    .required('Görev adı zorunludur')
-    .min(3, 'Görev adı en az 3 karakter olmalıdır'),
+    .required('Task name is required')
+    .min(3, 'Task name must be at least 3 characters'),
   Subject: Yup.string()
-    .required('Konu zorunludur'),
+    .required('Subject is required'),
   Status: Yup.string()
-    .required('Durum seçilmelidir')
-    .oneOf(['Open', 'Working', 'Completed'], 'Geçerli bir durum seçin'),
+    .required('Status must be selected')
+    .oneOf(['Open', 'Working', 'Completed'], 'Please select a valid status'),
   Description: Yup.string(), // Rich text description (optional)
   EstimatedHour: Yup.number()
-    .required('Tahmini süre zorunludur')
-    .positive('Tahmini süre pozitif olmalıdır'),
+    .required('Estimated hours is required')
+    .positive('Estimated hours must be positive'),
   SprintID: Yup.number()
-    .required('Sprint seçilmelidir'),
+    .required('Sprint must be selected'),
   UserID: Yup.number()
-    .required('Kullanıcı seçilmelidir'),
+    .required('User must be selected'),
   ParentID: Yup.number().nullable()
 });
 
-const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
+const AddTaskModal = ({ 
+  open, 
+  onClose, 
+  onAdd, 
+  onUpdate, 
+  taskToUpdate = null, 
+  mode = 'create' 
+}: AddTaskModalProps) => {
   const [animate, setAnimate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
@@ -68,7 +78,8 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
     fetchUsers, 
     fetchSprints, 
     fetchTasks, 
-    addTask, 
+    addTask,
+    updateTask, 
     canBeParent, 
     hasMaxChildren
   } = useTaskService();
@@ -118,16 +129,25 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
   const handleSubmit = async (values: Task) => {
     setIsSubmitting(true);
     try {
-      await addTask(values);
-      
-      // If parent component provided an onAdd callback, call it
-      if (onAdd) {
-        await onAdd(values);
+      if (mode === 'create') {
+        await addTask(values);
+        
+        // If parent component provided an onAdd callback, call it
+        if (onAdd) {
+          await onAdd(values);
+        }
+      } else if (mode === 'update' && taskToUpdate?.id) {
+        await updateTask(taskToUpdate.id, values);
+        
+        // If parent component provided an onUpdate callback, call it
+        if (onUpdate) {
+          await onUpdate(taskToUpdate.id, values);
+        }
       }
       
       handleClose();
     } catch (error) {
-      console.error('Task adding error:', error);
+      console.error(`Task ${mode === 'create' ? 'adding' : 'updating'} error:`, error);
     } finally {
       setIsSubmitting(false);
     }
@@ -137,7 +157,13 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
     onClose();
   };
 
-  const initialValues: Task = {
+  // Use taskToUpdate values if in update mode, otherwise use default values
+  const initialValues: Task = taskToUpdate ? {
+    ...taskToUpdate,
+    // Ensure proper typing of nullable fields
+    ParentID: taskToUpdate.ParentID ?? null,
+    Description: taskToUpdate.Description || ''
+  } : {
     TaskName: '',
     Subject: '',
     Status: 'Open',
@@ -183,7 +209,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
           color: 'primary.main',
           p: { xs: 1.5, sm: 2 }
         }}>
-          Yeni Görev Ekle
+          {mode === 'create' ? 'Add New Task' : 'Update Task'}
         </DialogTitle>
         <IconButton
           aria-label="close"
@@ -224,7 +250,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       fullWidth
                       id="TaskName"
                       name="TaskName"
-                      label="Görev Adı"
+                      label="Task Name"
                       value={values.TaskName}
                       onChange={handleChange}
                       error={touched.TaskName && Boolean(errors.TaskName)}
@@ -245,7 +271,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       fullWidth
                       id="Subject"
                       name="Subject"
-                      label="Konu"
+                      label="Subject"
                       value={values.Subject}
                       onChange={handleChange}
                       error={touched.Subject && Boolean(errors.Subject)}
@@ -267,7 +293,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       error={touched.Status && Boolean(errors.Status)}
                       margin="normal"
                     >
-                      <InputLabel id="status-label">Durum</InputLabel>
+                      <InputLabel id="status-label">Status</InputLabel>
                       <Select
                         labelId="status-label"
                         id="Status"
@@ -275,7 +301,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                         value={values.Status}
                         onChange={handleChange}
                         disabled={isSubmitting}
-                        label="Durum"
+                        label="Status"
                         sx={{
                           borderRadius: 2
                         }}
@@ -296,7 +322,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       fullWidth
                       id="EstimatedHour"
                       name="EstimatedHour"
-                      label="Tahmini Süre (Saat)"
+                      label="Estimated Hours"
                       type="number"
                       value={values.EstimatedHour}
                       onChange={handleChange}
@@ -335,7 +361,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       >
                         {sprints.length === 0 ? (
                           <MenuItem disabled value="">
-                            Yükeniyor veya sprint bulunamadı
+                            Loading or no sprints found
                           </MenuItem>
                         ) : (
                           sprints.map((sprint) => (
@@ -358,7 +384,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       error={touched.ParentID && Boolean(errors.ParentID)}
                       margin="normal"
                     >
-                      <InputLabel id="parent-label">Üst Görev (Opsiyonel)</InputLabel>
+                      <InputLabel id="parent-label">Parent Task (Optional)</InputLabel>
                       <Select
                         labelId="parent-label"
                         id="ParentID"
@@ -370,17 +396,17 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                           setFieldValue('ParentID', selectedValue === '' ? null : Number(selectedValue));
                         }}
                         disabled={isSubmitting || tasks.length === 0}
-                        label="Üst Görev (Opsiyonel)"
+                        label="Parent Task (Optional)"
                         sx={{
                           borderRadius: 2
                         }}
                       >
                         <MenuItem value="">
-                          <em>Üst görev yok</em>
+                          <em>No parent task</em>
                         </MenuItem>
                         {tasks.length === 0 ? (
                           <MenuItem disabled value="no-parent-available">
-                            <em>Uygun üst görev bulunmamaktadır</em>
+                            <em>No available parent tasks</em>
                           </MenuItem>
                         ) : (
                           tasks.map((task) => (
@@ -393,7 +419,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       <FormHelperText>
                         {touched.ParentID && errors.ParentID 
                           ? errors.ParentID as string 
-                          : 'Maksimum 2 seviye hiyerarşiye izin verilir'}
+                          : 'Maximum of 2-level hierarchy is allowed'}
                       </FormHelperText>
                     </FormControl>
                   </Box>
@@ -405,7 +431,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       error={touched.UserID && Boolean(errors.UserID)}
                       margin="normal"
                     >
-                      <InputLabel id="users-label">Kullanıcı</InputLabel>
+                      <InputLabel id="users-label">User</InputLabel>
                       <Select
                         labelId="users-label"
                         id="UserID"
@@ -416,14 +442,14 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                           setFieldValue('UserID', selectedUserId);
                         }}
                         disabled={isSubmitting || users.length === 0}
-                        label="Kullanıcı"
+                        label="User"
                         sx={{
                           borderRadius: 2
                         }}
                       >
                         {users.length === 0 ? (
                           <MenuItem disabled value="">
-                            Yükeniyor veya kullanıcı bulunamadı
+                            Loading or no users found
                           </MenuItem>
                         ) : (
                           users.map((user) => (
@@ -452,7 +478,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                     color="text.primary"
                   >
                     <DescriptionIcon sx={{ mr: 1, fontSize: 18 }} />
-                    Açıklama (İsteğe Bağlı)
+                    Description (Optional)
                   </Typography>
                   <RichTextEditor 
                     content={values.Description || ''}
@@ -471,7 +497,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       opacity: 0.8 
                     }}
                   >
-                    Görev oluşturulduktan sonra ilgili kullanıcı(lar) görevleri takip edebilecek
+                    After the task is created, assigned users will be able to track their tasks
                   </Typography>
                 </Box>
               
@@ -488,7 +514,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       fontWeight: 500
                     }}
                   >
-                    İptal
+                    Cancel
                   </Button>
                   <Button 
                     type="submit"
@@ -509,7 +535,9 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       background: !isSubmitting ? 'linear-gradient(45deg, #2196f3 30%, #21cbf3 90%)' : undefined,
                     }}
                   >
-                    {isSubmitting ? 'Ekleniyor...' : 'Oluştur'}
+                    {isSubmitting 
+                      ? (mode === 'create' ? 'Adding...' : 'Updating...') 
+                      : (mode === 'create' ? 'Create' : 'Update')}
                   </Button>
                 </DialogActions>
               </Form>
