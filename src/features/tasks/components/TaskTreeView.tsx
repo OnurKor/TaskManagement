@@ -161,10 +161,7 @@ interface TaskNodeProps {
     onDeleteTask(task.id as number, task.TaskName, hasChildren);
   };
   
-  const handleUpdate = (e: React.MouseEvent) => {
-    // Don't open update modal when clicking expand button or right-clicking
-    if (e.type === 'contextmenu') return;
-    
+  const handleUpdate = () => {
     // Proceed with update
     if (onUpdateTask) {
       onUpdateTask(task);
