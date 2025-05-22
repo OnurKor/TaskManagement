@@ -1,59 +1,66 @@
 import { supabase } from '../../../shared/utils/supabaseClient';
 import { store } from '../../../store/store';
-import { setUser, clearUser, refreshTokenSuccess } from '../../../store/slices/userSlice';
+import { setUser, clearUser } from '../../../store/slices/userSlice';
 
-// Mevcut oturum durumunu kontrol et
+/**
+ * Mevcut oturum durumunu kontrol eder
+ * @returns {Promise<boolean>} Kullanıcı oturum durumu
+ */
 export const checkSession = async () => {
   try {
     // Önce localStorage'dan kullanıcı durumunu kontrol et
     const userStateStr = localStorage.getItem('userState');
-    let localUserState = null;
     
     if (userStateStr) {
       try {
-        localUserState = JSON.parse(userStateStr);
-        // Eğer refresh token varsa ve token süresi dolmuşsa, yenilemeyi dene
-        if (localUserState && localUserState.refreshToken) {
+        const localUserState = JSON.parse(userStateStr);
+        
+        // LocalStorage'da geçerli bir token varsa, Redux store'u güncelle
+        if (localUserState && localUserState.isLoggedIn && localUserState.accessToken) {
+          console.log('Using session from localStorage');
+          
+          // Redux store'u güncelle
+          store.dispatch(setUser({
+            id: localUserState.id,
+            email: localUserState.email,
+            name: localUserState.name,
+            surname: localUserState.surname,
+            accessToken: localUserState.accessToken,
+            refreshToken: localUserState.refreshToken,
+            expiresAt: localUserState.expiresAt,
+          }));
+          
+          // Eğer token yenileme gerekiyorsa, arka planda yenile ama kullanıcıyı bekletme
           const currentTime = Math.floor(Date.now() / 1000);
-          
-          // Token süresi dolmuş ya da 5 dakika içinde dolacaksa
-          if (!localUserState.expiresAt || 
-              (localUserState.expiresAt && localUserState.expiresAt - currentTime < 300)) {
-            return await refreshSession();
+          if (localUserState.refreshToken && 
+              (!localUserState.expiresAt || localUserState.expiresAt - currentTime < 300)) {
+            console.log('Token will expire soon, refreshing in background');
+            refreshSession(localUserState.refreshToken).catch(e => 
+              console.error('Background token refresh failed:', e));
           }
           
-          // Hala geçerli bir token varsa, localStorage'dan yükle
-          if (localUserState.isLoggedIn && localUserState.accessToken) {
-            // Redux store'u localStorage'dan güncelle
-            store.dispatch(setUser({
-              id: localUserState.id,
-              email: localUserState.email,
-              name: localUserState.name,
-              surname: localUserState.surname,
-              accessToken: localUserState.accessToken,
-              refreshToken: localUserState.refreshToken,
-              expiresAt: localUserState.expiresAt,
-            }));
-            return true;
-          }
+          return true;
         }
       } catch (e) {
         console.error('localStorage parsing error:', e);
       }
     }
     
-    // localStorage'dan yükleme başarısız olursa Supabase'den kontrol et
+    // Supabase'den mevcut oturum bilgisini al
+    console.log('Checking session with Supabase');
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
       throw error;
     }
     
+    // Oturum bilgisi varsa kullanıcı bilgilerini güncelle
     if (data && data.session) {
       const { session } = data;
       const user = session.user;
       
       if (user && session) {
+        console.log('Valid session found from Supabase');
         // Kullanıcı adını display_name'den al
         const displayName = user.user_metadata?.display_name || '';
         const nameParts = displayName.split(' ');
@@ -73,11 +80,11 @@ export const checkSession = async () => {
         
         return true;
       }
-    } else {
-      // Geçerli oturum yoksa kullanıcı durumunu temizle
-      store.dispatch(clearUser());
-      return false;
     }
+    
+    // Oturum yoksa kullanıcı durumunu temizle
+    store.dispatch(clearUser());
+    return false;
   } catch (error) {
     console.error('Oturum kontrolü sırasında hata:', error);
     store.dispatch(clearUser());
@@ -85,7 +92,10 @@ export const checkSession = async () => {
   }
 };
 
-// Kullanıcı çıkış yaptığında
+/**
+ * Kullanıcı çıkış işlemi
+ * @returns {Promise<boolean>} İşlem başarılı/başarısız
+ */
 export const signOut = async () => {
   try {
     const { error } = await supabase.auth.signOut();
@@ -103,30 +113,17 @@ export const signOut = async () => {
   }
 };
 
-// Tokeni yenile
-export const refreshSession = async () => {
+/**
+ * Token yenileme işlemi
+ * Not: Bu fonksiyon axiosConfig.ts içindeki token yenileme mekanizmasıyla 
+ * koordineli çalışır. Genellikle direkt çağrılmaya gerek yoktur.
+ * @param {string} refreshToken - Mevcut refresh token
+ * @returns {Promise<boolean>} Token yenileme başarılı/başarısız
+ */
+export const refreshSession = async (refreshToken: string) => {
   try {
-    // Önce localStorage'dan, sonra Redux store'dan refreshToken'ı al
-    let refreshToken;
-    const userStateStr = localStorage.getItem('userState');
-    
-    if (userStateStr) {
-      try {
-        const localUserState = JSON.parse(userStateStr);
-        refreshToken = localUserState.refreshToken;
-      } catch (e) {
-        console.error('localStorage parsing error:', e);
-      }
-    }
-    
-    // localStorage'da token bulunamadıysa Redux store'dan al
     if (!refreshToken) {
-      const state = store.getState();
-      refreshToken = state.user.refreshToken;
-    }
-    
-    if (!refreshToken) {
-      console.log('Yenilenecek token bulunamadı');
+      console.warn('Refresh token bulunamadı');
       return false;
     }
     
@@ -135,7 +132,6 @@ export const refreshSession = async () => {
     });
     
     if (error) {
-      console.error('Token yenileme hatası:', error);
       throw error;
     }
     
@@ -145,8 +141,6 @@ export const refreshSession = async () => {
       const nameParts = displayName.split(' ');
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
-      
-      console.log('Token başarıyla yenilendi');
       
       // Redux store'u güncelle
       store.dispatch(setUser({

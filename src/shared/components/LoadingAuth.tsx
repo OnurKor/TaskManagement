@@ -1,7 +1,46 @@
-import React from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, CircularProgress, Typography, Button } from '@mui/material';
 
 const LoadingAuth: React.FC = () => {
+  const [waitTime, setWaitTime] = useState(0);
+  
+  useEffect(() => {
+    // Start a timer to track how long we've been waiting
+    const timer = setInterval(() => {
+      setWaitTime(prev => prev + 1);
+    }, 1000);
+    
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+  
+  // After 10 seconds of waiting, show a troubleshooting option
+  const showTroubleshooting = waitTime > 10;
+  
+  const handleClearAndReload = () => {
+    // Log the current state for debugging
+    console.group('Troubleshooting Auth');
+    
+    try {
+      const userStateStr = localStorage.getItem('userState');
+      if (userStateStr) {
+        console.log('LocalStorage state before clearing:', JSON.parse(userStateStr));
+      } else {
+        console.log('No userState in localStorage');
+      }
+    } catch (e) {
+      console.error('Error reading localStorage:', e);
+    }
+    
+    console.log('Clearing localStorage and reloading...');
+    console.groupEnd();
+    
+    // Clear localStorage and reload the page
+    localStorage.removeItem('userState');
+    window.location.reload();
+  };
+  
   return (
     <Box
       sx={{
@@ -17,8 +56,23 @@ const LoadingAuth: React.FC = () => {
         Kimlik doğrulama kontrol ediliyor...
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        Lütfen bekleyin
+        Lütfen bekleyin ({waitTime}s)
       </Typography>
+      
+      {showTroubleshooting && (
+        <Box sx={{ mt: 4, textAlign: 'center' }}>
+          <Typography variant="body2" color="error" sx={{ mb: 2 }}>
+            Kimlik doğrulama beklenenden uzun sürdü.
+          </Typography>
+          <Button 
+            variant="outlined" 
+            color="primary" 
+            onClick={handleClearAndReload}
+          >
+            Oturumu Temizle ve Yeniden Dene
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

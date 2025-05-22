@@ -78,6 +78,17 @@ export const userSlice = createSlice({
         ...state
       }));
     },
+    // For token refresh testing purposes
+    forceTokenExpiration: (state, action: PayloadAction<number>) => {
+      state.expiresAt = action.payload;
+      
+      // Update localStorage
+      localStorage.setItem('userState', JSON.stringify({
+        ...state
+      }));
+      
+      console.log('Token expiration time modified for testing');
+    },
     clearUser: (state) => {
       state.id = null
       state.email = null
@@ -94,5 +105,5 @@ export const userSlice = createSlice({
   },
 })
 
-export const { setUser, refreshTokenSuccess, clearUser } = userSlice.actions
+export const { setUser, refreshTokenSuccess, clearUser, forceTokenExpiration } = userSlice.actions
 export default userSlice.reducer

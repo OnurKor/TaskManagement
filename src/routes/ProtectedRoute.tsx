@@ -8,44 +8,54 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+/**
+ * ProtectedRoute component to secure routes that require authentication
+ * Uses our token refresh mechanism to ensure uninterrupted user experience
+ */
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isLoggedIn, accessToken, refreshToken } = useAppSelector((state) => state.user);
+  const { isLoggedIn, accessToken } = useAppSelector((state) => state.user);
   const [checking, setChecking] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   
   useEffect(() => {
-    // Oturum durumunu kontrol et ve gerekirse güncelle
     const verifyAuth = async () => {
       setChecking(true);
       
       try {
-        // Zaten giriş yapmışsa
+        // Quick check from Redux store first
         if (isLoggedIn && accessToken) {
+          console.log('ProtectedRoute: User already logged in');
           setAuthorized(true);
           setChecking(false);
           return;
         }
         
-        // localStorage'dan kontrol et
+        // Quick check from localStorage before making API call
         const userStateStr = localStorage.getItem('userState');
         if (userStateStr) {
-          const userState = JSON.parse(userStateStr);
-          if (userState.isLoggedIn && userState.accessToken) {
-            setAuthorized(true);
-            setChecking(false);
-            return;
+          try {
+            const localUserState = JSON.parse(userStateStr);
+            if (localUserState.isLoggedIn && localUserState.accessToken) {
+              console.log('ProtectedRoute: Found valid session in localStorage');
+              // Set authorized immediately to prevent loading flicker
+              setAuthorized(true);
+              setChecking(false);
+              
+              // In the background, sync with checkSession to update Redux
+              checkSession().catch(e => console.error('Background session check failed:', e));
+              return;
+            }
+          } catch (e) {
+            console.error('ProtectedRoute: localStorage parsing error:', e);
           }
         }
         
-        // Refresh token varsa, oturumu yenilemeyi dene
-        if (refreshToken || (userStateStr && JSON.parse(userStateStr).refreshToken)) {
-          const sessionResult = await checkSession();
-          setAuthorized(sessionResult === true);
-        } else {
-          setAuthorized(false);
-        }
+        console.log('ProtectedRoute: Checking session with API');
+        // Check session with Supabase as a last resort
+        const sessionValid = await checkSession();
+        setAuthorized(sessionValid);
       } catch (error) {
-        console.error('Yetkilendirme kontrolü sırasında hata:', error);
+        console.error('ProtectedRoute: Authorization check error:', error);
         setAuthorized(false);
       } finally {
         setChecking(false);
@@ -53,19 +63,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     };
     
     verifyAuth();
-  }, [isLoggedIn, accessToken, refreshToken]);
+  }, [isLoggedIn, accessToken]);
   
-  // Kontrol sürüyor
+  // Show loading indicator while checking authentication
   if (checking) {
     return <LoadingAuth />;
   }
   
-  // Kullanıcı yetkili değilse login sayfasına yönlendir
+  // Redirect to login if not authorized
   if (!authorized) {
     return <Navigate to="/login" />;
   }
   
-  // Kullanıcı giriş yapmışsa, çocuk elementleri render et
+  // User is authenticated, render protected content
   return <>{children}</>;
 };
 
