@@ -56,6 +56,16 @@ export const useTaskService = () => {
     });
   };
 
+  const deleteTask = async (taskId: number) => {
+    return await request(`Tasks?id=eq.${taskId}`, {
+      useAuth: true,
+      method: 'DELETE',
+      headers: {
+        'Prefer': 'return=representation'
+      }
+    });
+  };
+
   const fetchUsers = async () => {
     return await request('Users', { 
       useAuth: true
@@ -180,6 +190,7 @@ export const useTaskService = () => {
   return {
     fetchTasks,
     addTask,
+    deleteTask,
     fetchUsers,
     fetchSprints,
     organizeTasks,

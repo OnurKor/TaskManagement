@@ -22,10 +22,11 @@ import FolderIcon from '@mui/icons-material/Folder';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SprintIcon from '@mui/icons-material/DirectionsRun';
-import DescriptionIcon from '@mui/icons-material/Description';
 import { useTaskService } from '../services/taskService';
 import type { Task, TaskWithChildren } from '../services/taskService';
 import AddTaskModal from './AddTaskModal';
+import TaskContextMenu from './TaskContextMenu';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
 
 // Custom styling for parent task cards
 const ParentTaskCard = styled(Card)(({ theme }) => ({
@@ -109,6 +110,8 @@ interface TaskNodeProps {
   getAvatarColor: (userId: number) => string;
   isFirstChild?: boolean;
   isLastChild?: boolean;
+  onDeleteTask: (taskId: number, taskName: string) => void;
+  onUpdateTask?: (task: TaskWithChildren) => void;
 }
 
 const TaskNode = ({
@@ -118,9 +121,16 @@ const TaskNode = ({
   getUserName,
   getUserInitial,
   getStatusColor,
-  getAvatarColor
+  getAvatarColor,
+  onDeleteTask,
+  onUpdateTask
 }: TaskNodeProps) => {
   const [expanded, setExpanded] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
+  
   const hasChildren = task.children && task.children.length > 0;
   const TaskCardComponent = hasChildren ? ParentTaskCard : ChildTaskCard;
   const theme = useTheme();
@@ -128,6 +138,29 @@ const TaskNode = ({
   const toggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
     setExpanded(!expanded);
+  };
+  
+  const handleContextMenu = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenu({
+      mouseX: event.clientX,
+      mouseY: event.clientY,
+    });
+  };
+  
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+  
+  const handleDelete = () => {
+    onDeleteTask(task.id as number, task.TaskName);
+  };
+  
+  const handleUpdate = () => {
+    if (onUpdateTask) {
+      onUpdateTask(task);
+    }
   };
   
   return (
@@ -150,7 +183,10 @@ const TaskNode = ({
       })
     }}>
       {/* Task Card */}
-      <TaskCardComponent sx={{ ml: level * 3 }}>
+      <TaskCardComponent 
+        sx={{ ml: level * 3 }}
+        onContextMenu={handleContextMenu}
+      >
         <CardContent sx={{ pb: 1 }}>
           {/* Task Header */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -354,11 +390,22 @@ const TaskNode = ({
                 getAvatarColor={getAvatarColor}
                 isFirstChild={index === 0}
                 isLastChild={index === (task.children?.length || 0) - 1}
+                onDeleteTask={onDeleteTask}
+                onUpdateTask={onUpdateTask}
               />
             ))}
           </Box>
         </Collapse>
       )}
+      
+      {/* Context Menu */}
+      <TaskContextMenu
+        open={contextMenu !== null}
+        anchorPosition={contextMenu ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : null}
+        onClose={handleCloseContextMenu}
+        onDelete={handleDelete}
+        onUpdate={handleUpdate}
+      />
     </Box>
   );
 };
@@ -377,6 +424,11 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
   // Pagination state
   const [visibleTaskCount, setVisibleTaskCount] = useState(5); // Başlangıçta sadece 5 task göster
   const [hasMoreTasks, setHasMoreTasks] = useState(false);
+  
+  // Delete confirmation state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deletingTask, setDeletingTask] = useState<{ id: number; name: string } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   
   const taskService = useTaskService();
   
@@ -436,6 +488,43 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
     if (!hasMoreTasks) {
       setVisibleTaskCount(currentVisibleCount + 1);
     }
+  };
+  
+  // Handler for initiating task deletion
+  const handleDeleteTask = (taskId: number, taskName: string) => {
+    setDeletingTask({ id: taskId, name: taskName });
+    setDeleteConfirmOpen(true);
+  };
+
+  // Handler for confirming and executing task deletion
+  const handleConfirmDelete = async () => {
+    if (!deletingTask) return;
+    
+    setDeleteLoading(true);
+    try {
+      await taskService.deleteTask(deletingTask.id);
+      // Refresh the task list after successful deletion
+      await fetchData();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      // TODO: Show error notification if needed
+    } finally {
+      setDeleteLoading(false);
+      setDeleteConfirmOpen(false);
+      setDeletingTask(null);
+    }
+  };
+
+  // Handler for canceling task deletion
+  const handleCancelDelete = () => {
+    setDeleteConfirmOpen(false);
+    setDeletingTask(null);
+  };
+
+  // Handler for updating a task (placeholder for future implementation)
+  const handleUpdateTask = (task: TaskWithChildren) => {
+    // TODO: Implement task update functionality
+    console.log('Update task:', task);
   };
   
   // Helper function to get sprint name by id
@@ -540,6 +629,8 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
                 getUserInitial={getUserInitial}
                 getStatusColor={getStatusColor}
                 getAvatarColor={getAvatarColor}
+                onDeleteTask={handleDeleteTask}
+                onUpdateTask={handleUpdateTask}
               />
             ))}
             
@@ -575,6 +666,15 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
         open={openTaskModal} 
         onClose={handleCloseTaskModal} 
         onAdd={handleAddTask} 
+      />
+      
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        open={deleteConfirmOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        loading={deleteLoading}
+        taskName={deletingTask ? deletingTask.name : ''}
       />
     </Box>
   );
