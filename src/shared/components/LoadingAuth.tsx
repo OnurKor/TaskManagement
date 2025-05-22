@@ -19,23 +19,6 @@ const LoadingAuth: React.FC = () => {
   const showTroubleshooting = waitTime > 10;
   
   const handleClearAndReload = () => {
-    // Log the current state for debugging
-    console.group('Troubleshooting Auth');
-    
-    try {
-      const userStateStr = localStorage.getItem('userState');
-      if (userStateStr) {
-        console.log('LocalStorage state before clearing:', JSON.parse(userStateStr));
-      } else {
-        console.log('No userState in localStorage');
-      }
-    } catch (e) {
-      console.error('Error reading localStorage:', e);
-    }
-    
-    console.log('Clearing localStorage and reloading...');
-    console.groupEnd();
-    
     // Clear localStorage and reload the page
     localStorage.removeItem('userState');
     window.location.reload();

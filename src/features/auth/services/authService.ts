@@ -17,8 +17,6 @@ export const checkSession = async () => {
         
         // LocalStorage'da geçerli bir token varsa, Redux store'u güncelle
         if (localUserState && localUserState.isLoggedIn && localUserState.accessToken) {
-          console.log('Using session from localStorage');
-          
           // Redux store'u güncelle
           store.dispatch(setUser({
             id: localUserState.id,
@@ -34,9 +32,8 @@ export const checkSession = async () => {
           const currentTime = Math.floor(Date.now() / 1000);
           if (localUserState.refreshToken && 
               (!localUserState.expiresAt || localUserState.expiresAt - currentTime < 300)) {
-            console.log('Token will expire soon, refreshing in background');
             refreshSession(localUserState.refreshToken).catch(e => 
-              console.error('Background token refresh failed:', e));
+              console.error('Token refresh failed:', e));
           }
           
           return true;
@@ -47,7 +44,6 @@ export const checkSession = async () => {
     }
     
     // Supabase'den mevcut oturum bilgisini al
-    console.log('Checking session with Supabase');
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
@@ -60,7 +56,6 @@ export const checkSession = async () => {
       const user = session.user;
       
       if (user && session) {
-        console.log('Valid session found from Supabase');
         // Kullanıcı adını display_name'den al
         const displayName = user.user_metadata?.display_name || '';
         const nameParts = displayName.split(' ');

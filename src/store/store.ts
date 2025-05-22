@@ -7,10 +7,10 @@ export const store = configureStore({
   },
 })
 
-// Make store available globally for testing
-if (typeof window !== 'undefined') {
+// Make store available globally for testing only in development mode
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
   (window as any).store = store;
-};
+}
 
 // Redux için tip tanımlamaları
 export type RootState = ReturnType<typeof store.getState>;

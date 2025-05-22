@@ -24,7 +24,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       try {
         // Quick check from Redux store first
         if (isLoggedIn && accessToken) {
-          console.log('ProtectedRoute: User already logged in');
           setAuthorized(true);
           setChecking(false);
           return;
@@ -36,26 +35,24 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           try {
             const localUserState = JSON.parse(userStateStr);
             if (localUserState.isLoggedIn && localUserState.accessToken) {
-              console.log('ProtectedRoute: Found valid session in localStorage');
               // Set authorized immediately to prevent loading flicker
               setAuthorized(true);
               setChecking(false);
               
               // In the background, sync with checkSession to update Redux
-              checkSession().catch(e => console.error('Background session check failed:', e));
+              checkSession().catch(e => console.error('Session check failed:', e));
               return;
             }
           } catch (e) {
-            console.error('ProtectedRoute: localStorage parsing error:', e);
+            console.error('localStorage parsing error:', e);
           }
         }
         
-        console.log('ProtectedRoute: Checking session with API');
         // Check session with Supabase as a last resort
         const sessionValid = await checkSession();
         setAuthorized(sessionValid);
       } catch (error) {
-        console.error('ProtectedRoute: Authorization check error:', error);
+        console.error('Authorization check error:', error);
         setAuthorized(false);
       } finally {
         setChecking(false);

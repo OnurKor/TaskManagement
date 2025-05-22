@@ -102,35 +102,30 @@ api.interceptors.response.use(
         
         // If not in Redux, try localStorage as backup
         if (!refreshToken) {
-          console.log('Axios: No refresh token in Redux, checking localStorage');
           const userStateStr = localStorage.getItem('userState');
           if (userStateStr) {
             try {
               const localUserState = JSON.parse(userStateStr);
               refreshToken = localUserState.refreshToken;
             } catch (e) {
-              console.error('Axios: localStorage parsing error:', e);
+              console.error('localStorage parsing error:', e);
             }
           }
         }
         
         if (!refreshToken) {
-          console.error('Axios: No refresh token available');
           throw new Error('No refresh token available');
         }
         
-        console.log('Axios: Attempting token refresh');
         // Call refresh session function with refresh token
         const success = await refreshSession(refreshToken);
         
         if (success) {
-          console.log('Axios: Token refresh successful');
           // Get new tokens from the updated store
           const updatedState = store.getState();
           const newAccessToken = updatedState.user?.accessToken;
           
           if (!newAccessToken) {
-            console.error('Axios: Failed to get new access token after refresh');
             throw new Error('Failed to get new access token after refresh');
           }
           
@@ -177,8 +172,8 @@ api.interceptors.response.use(
   }
 );
 
-// Make the API instance available globally for testing purposes
-if (typeof window !== 'undefined') {
+// Make the API instance available globally for testing purposes only in development mode
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
   (window as any).api = api;
 }
 
