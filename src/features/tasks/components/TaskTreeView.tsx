@@ -112,9 +112,7 @@ interface TaskNodeProps {
   isLastChild?: boolean;
   onDeleteTask: (taskId: number, taskName: string, hasChild: boolean | undefined) => void;
   onUpdateTask?: (task: TaskWithChildren) => void;
-}
-
-const TaskNode = ({
+}  const TaskNode = ({
   task,
   level,
   getSprintName,
@@ -133,7 +131,8 @@ const TaskNode = ({
   } | null>(null);
   
   const hasChildren = task.children && task.children.length > 0;
-  const TaskCardComponent = hasChildren ? ParentTaskCard : ChildTaskCard;
+  const isParent = level === 0; // Parent task is defined by being at top level
+  const TaskCardComponent = isParent ? ParentTaskCard : ChildTaskCard;
   const theme = useTheme();
   
   const toggleExpand = (e: React.MouseEvent) => {
@@ -225,7 +224,7 @@ const TaskNode = ({
               ) : (
                 <Box sx={{ ml: 4.5 }} /> // Spacing for alignment with parent tasks
               )}
-              {hasChildren ? (
+              {isParent ? (
                 <FolderIcon color="primary" sx={{ mr: 1, fontSize: 20 }} />
               ) : (
                 <AssignmentIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
@@ -253,7 +252,7 @@ const TaskNode = ({
               maxWidth: '90%',
               textOverflow: 'ellipsis',
               overflow: 'hidden',
-              pl: hasChildren ? 0 : 4.5 // Alignment
+              pl: isParent ? 0 : 4.5 // Alignment
             }}
           >
             {task.Subject}
@@ -263,7 +262,7 @@ const TaskNode = ({
           {task.Description && (
             <Box 
               sx={{ 
-                pl: hasChildren ? 0 : 4.5, 
+                pl: isParent ? 0 : 4.5, 
                 mb: 2,
                 mt: 1,
                 border: '1px solid',
@@ -298,7 +297,7 @@ const TaskNode = ({
             justifyContent: 'space-between', 
             alignItems: 'center',
             mt: 1.5,
-            pl: hasChildren ? 0 : 4.5 // Alignment
+            pl: isParent ? 0 : 4.5 // Alignment
           }}>
             {/* Sprint */}
             <Tooltip title="Sprint">
