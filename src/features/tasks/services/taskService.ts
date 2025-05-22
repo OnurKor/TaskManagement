@@ -7,6 +7,7 @@ export interface Task {
   TaskName: string;
   Subject: string;
   Status: 'Open' | 'Working' | 'Completed';
+  Description?: string; // Rich text description
   EstimatedHour: number;
   SprintID: number;
   UserID: number; // Single user ID as a number
@@ -38,6 +39,7 @@ export const useTaskService = () => {
       TaskName: task.TaskName.trim(),
       Subject: task.Subject.trim(),
       Status: task.Status,
+      Description: task.Description || null, // Include rich text description
       EstimatedHour: Number(task.EstimatedHour),
       SprintID: Number(task.SprintID),
       UserID: Number(task.UserID),

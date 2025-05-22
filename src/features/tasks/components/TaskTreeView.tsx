@@ -23,6 +23,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SprintIcon from '@mui/icons-material/DirectionsRun';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { useTaskService } from '../services/taskService';
 import type { Task, TaskWithChildren } from '../services/taskService';
 import AddTaskModal from './AddTaskModal';
@@ -221,6 +222,36 @@ const TaskNode = ({
           >
             {task.Subject}
           </Typography>
+
+          {/* Description Icon showing if description exists - with tooltip to show preview */}
+          {task.Description && (
+            <Tooltip
+              title={
+                <Box sx={{ maxWidth: 300 }}>
+                  <Typography variant="caption" fontWeight="bold" display="block" gutterBottom>
+                    Görev Açıklaması:
+                  </Typography>
+                  <Box 
+                    dangerouslySetInnerHTML={{ __html: task.Description }} 
+                    sx={{
+                      '& p': { margin: '0.2em 0', fontSize: '0.8rem' },
+                      '& ul, & ol': { paddingLeft: 2, margin: '0.2em 0' },
+                      '& li': { fontSize: '0.8rem' }
+                    }}
+                  />
+                </Box>
+              }
+              arrow
+              placement="top-start"
+            >
+              <Box sx={{ pl: hasChildren ? 0 : 4.5, mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <DescriptionIcon fontSize="small" color="action" />
+                <Typography variant="caption" color="text.secondary">
+                  Detaylı açıklama mevcut
+                </Typography>
+              </Box>
+            </Tooltip>
+          )}
           
           <Divider sx={{ my: 1.5 }} />
           

@@ -23,8 +23,10 @@ import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import CloseIcon from '@mui/icons-material/Close';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { useTaskService } from '../services/taskService';
 import type { Task } from '../services/taskService';
+import RichTextEditor from './RichTextEditor';
 
 interface AddTaskModalProps {
   open: boolean;
@@ -42,6 +44,7 @@ const TaskSchema = Yup.object().shape({
   Status: Yup.string()
     .required('Durum seçilmelidir')
     .oneOf(['Open', 'Working', 'Completed'], 'Geçerli bir durum seçin'),
+  Description: Yup.string(), // Rich text description (optional)
   EstimatedHour: Yup.number()
     .required('Tahmini süre zorunludur')
     .positive('Tahmini süre pozitif olmalıdır'),
@@ -138,6 +141,7 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
     TaskName: '',
     Subject: '',
     Status: 'Open',
+    Description: '',
     EstimatedHour: 0,
     SprintID: 0,
     UserID: 0,
@@ -148,14 +152,16 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
     <Dialog 
       open={open} 
       onClose={isSubmitting ? undefined : handleClose}
-      maxWidth="md" 
+      maxWidth="lg" /* Changed from md to lg for more space for the rich text editor */
       fullWidth
       PaperProps={{
         sx: {
           borderRadius: 3,
           padding: isMobile ? 1 : 2,
           boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          height: isMobile ? 'auto' : 'auto',
+          maxHeight: isMobile ? '90vh' : '80vh'
         }
       }}
       TransitionProps={{
@@ -432,6 +438,27 @@ const AddTaskModal = ({ open, onClose, onAdd }: AddTaskModalProps) => {
                       )}
                     </FormControl>
                   </Box>
+                </Box>
+                
+                {/* Description - Rich Text Editor */}
+                <Box sx={{ 
+                  mt: 3, 
+                  mb: 2,
+                  gridColumn: { xs: '1', md: '1 / span 2' } // Span across both columns on desktop
+                }}>
+                  <Typography 
+                    variant="subtitle2" 
+                    sx={{ mb: 1, fontWeight: 500, display: 'flex', alignItems: 'center' }}
+                    color="text.primary"
+                  >
+                    <DescriptionIcon sx={{ mr: 1, fontSize: 18 }} />
+                    Açıklama (İsteğe Bağlı)
+                  </Typography>
+                  <RichTextEditor 
+                    content={values.Description || ''}
+                    onChange={(content) => setFieldValue('Description', content)}
+                    disabled={isSubmitting}
+                  />
                 </Box>
                 
                 <Box sx={{ mt: 3 }}>
