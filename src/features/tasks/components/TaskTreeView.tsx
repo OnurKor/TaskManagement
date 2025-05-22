@@ -103,14 +103,14 @@ const ExpandIcon = ({ expanded, onClick }: ExpandIconProps) => (
 interface TaskNodeProps {
   task: TaskWithChildren;
   level: number;
-  getSprintName: (sprintId: number) => string;
-  getUserName: (userId: number) => string;
-  getUserInitial: (userId: number) => string;
-  getStatusColor: (status: string) => string;
-  getAvatarColor: (userId: number) => string;
+  getSprintName: (sprintId: number | string) => string;
+  getUserName: (userId: number | string) => string;
+  getUserInitial: (userId: number | string) => string;
+  getStatusColor: (status: string ) => string;
+  getAvatarColor: (userId: number | string) => string;
   isFirstChild?: boolean;
   isLastChild?: boolean;
-  onDeleteTask: (taskId: number, taskName: string) => void;
+  onDeleteTask: (taskId: number, taskName: string, hasChild: boolean | undefined) => void;
   onUpdateTask?: (task: TaskWithChildren) => void;
 }
 
@@ -123,6 +123,7 @@ const TaskNode = ({
   getStatusColor,
   getAvatarColor,
   onDeleteTask,
+
   onUpdateTask
 }: TaskNodeProps) => {
   const [expanded, setExpanded] = useState(false);
@@ -154,7 +155,7 @@ const TaskNode = ({
   };
   
   const handleDelete = () => {
-    onDeleteTask(task.id as number, task.TaskName);
+    onDeleteTask(task.id as number, task.TaskName, hasChildren);
   };
   
   const handleUpdate = () => {
@@ -427,7 +428,7 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
   
   // Delete confirmation state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [deletingTask, setDeletingTask] = useState<{ id: number; name: string } | null>(null);
+  const [deletingTask, setDeletingTask] = useState<{ id: number; name: string; hasChild:boolean | undefined } | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   
   const taskService = useTaskService();
@@ -491,8 +492,8 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
   };
   
   // Handler for initiating task deletion
-  const handleDeleteTask = (taskId: number, taskName: string) => {
-    setDeletingTask({ id: taskId, name: taskName });
+  const handleDeleteTask = (taskId: number, taskName: string, hasChild: boolean | undefined) => {
+    setDeletingTask({ id: taskId, name: taskName, hasChild });
     setDeleteConfirmOpen(true);
   };
 
@@ -552,13 +553,13 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
   };
   
   // Helper function to get sprint name by id
-  const getSprintName = (sprintId: number) => {
-    const sprint = sprints.find(s => s.id === sprintId);
+  const getSprintName = (sprintId: number | string) => {
+    const sprint = sprints.find(s => String(s.id) === String(sprintId));
     return sprint ? sprint.SprintName : 'Unknown';
   };
   
   // Helper function to get user name by id
-  const getUserName = (userId: number) => {
+  const getUserName = (userId: number | string) => {
     if (!userId) {
       return 'Not Assigned';
     }
@@ -568,7 +569,7 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
   };
 
   // Helper function to get user initial for avatar
-  const getUserInitial = (userId: number) => {
+  const getUserInitial = (userId: number | string) => {
     if (!userId) return 'N/A';
     
     const user = users.find(u => u.id === userId);
@@ -592,7 +593,7 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
   };
 
   // Helper function to get avatar background color based on username
-  const getAvatarColor = (userId: number) => {
+  const getAvatarColor = (userId: number | string) => {
     if (!userId) return '#bdbdbd';
     
     const colors = [
@@ -710,6 +711,7 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({ refreshTrigger }) => {
         onConfirm={handleConfirmDelete}
         loading={deleteLoading}
         taskName={deletingTask ? deletingTask.name : ''}
+        hasChildren={deletingTask ? deletingTask.hasChild : false}
       />
     </Box>
   );

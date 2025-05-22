@@ -6,7 +6,8 @@ import {
   DialogContentText,
   DialogTitle,
   Button,
-  Box
+  Alert,
+  Box,
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 
@@ -16,6 +17,7 @@ interface DeleteConfirmationProps {
   onClose: () => void;
   onConfirm: () => Promise<void>;
   loading: boolean;
+  hasChildren?: boolean;
 }
 
 const DeleteConfirmationModal: React.FC<DeleteConfirmationProps> = ({
@@ -23,7 +25,8 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationProps> = ({
   taskName,
   onClose,
   onConfirm,
-  loading
+  loading,
+  hasChildren = false
 }) => {
   const handleConfirm = async () => {
     await onConfirm();
@@ -47,9 +50,26 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationProps> = ({
         Confirm Deletion
       </DialogTitle>
       <DialogContent>
-        <DialogContentText id="delete-confirmation-description">
-          Are you sure you want to delete the task: <span style={{ fontWeight: 'bold' }}>{taskName}</span>?
-        </DialogContentText>
+        {hasChildren ? (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 2, 
+              borderRadius: 1,
+              '& .MuiAlert-message': { width: '100%' }
+            }}
+          >
+            <Box sx={{ fontWeight: 'medium' }}>Cannot Delete Parent Task</Box>
+            <Box sx={{ mt: 0.5, fontSize: '0.9rem' }}>
+              This task has child tasks associated with it. Please delete all child tasks first before deleting this parent task.
+            </Box>
+          </Alert>
+        ) : (
+          <DialogContentText id="delete-confirmation-description">
+            Are you sure you want to delete the task: <span style={{ fontWeight: 'bold' }}>{taskName}</span>?
+          </DialogContentText>
+        )}
+        
         <DialogContentText sx={{ mt: 1 }}>
           This action cannot be undone. All related data will be permanently deleted.
         </DialogContentText>
@@ -60,17 +80,19 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationProps> = ({
           disabled={loading}
           variant="outlined"
         >
-          Cancel
+          {hasChildren ? 'Close' : 'Cancel'}
         </Button>
-        <Button 
-          onClick={handleConfirm} 
-          color="error" 
-          variant="contained" 
-          disabled={loading}
-          sx={{ minWidth: '100px' }}
-        >
-          {loading ? 'Deleting...' : 'Delete'}
-        </Button>
+        {!hasChildren && (
+          <Button 
+            onClick={handleConfirm} 
+            color="error" 
+            variant="contained" 
+            disabled={loading}
+            sx={{ minWidth: '100px' }}
+          >
+            {loading ? 'Deleting...' : 'Delete'}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
