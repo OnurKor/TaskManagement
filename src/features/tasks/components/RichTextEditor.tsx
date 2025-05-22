@@ -21,7 +21,11 @@ interface RichTextEditorProps {
 const RichTextEditor = ({ content, onChange, disabled = false }: RichTextEditorProps) => {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        heading: {
+          levels: [1],
+        },
+      }),
     ],
     content: content || '',
     editable: !disabled,
@@ -66,10 +70,24 @@ const RichTextEditor = ({ content, onChange, disabled = false }: RichTextEditorP
             margin: '0.5em 0' 
           },
           '& ul, & ol': { 
-            padding: '0 1rem' 
+            padding: '0 1rem',
+            margin: '0.5em 0',
+            color: 'black'
           },
-          '& h1, & h2, & h3': { 
-            margin: '0.8em 0 0.4em' 
+          '& ul li': {
+            listStyle: 'disc',
+            marginLeft: '1rem',
+            color: 'black'
+          },
+          '& ol li': {
+            listStyle: 'decimal',
+            marginLeft: '1rem',
+            color: 'black'
+          },
+          '& h1': { 
+            margin: '0.8em 0 0.4em',
+            fontSize: '1.5rem',
+            fontWeight: '600'
           },
         }
       }}
@@ -85,7 +103,7 @@ const RichTextEditor = ({ content, onChange, disabled = false }: RichTextEditorP
       }}>
         {/* Headings */}
         <Box sx={{ display: 'flex', mr: 1 }}>
-          <Tooltip title="Başlık 1">
+          <Tooltip title="Heading">
             <IconButton 
               size="small" 
               onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -93,26 +111,14 @@ const RichTextEditor = ({ content, onChange, disabled = false }: RichTextEditorP
               color={editor?.isActive('heading', { level: 1 }) ? 'primary' : 'default'}
               sx={{ fontWeight: 'bold' }}
             >
-              H1
-            </IconButton>
-          </Tooltip>
-          
-          <Tooltip title="Başlık 2">
-            <IconButton 
-              size="small" 
-              onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-              disabled={disabled || !editor?.can().chain().focus().toggleHeading({ level: 2 }).run()}
-              color={editor?.isActive('heading', { level: 2 }) ? 'primary' : 'default'}
-              sx={{ fontWeight: 'bold' }}
-            >
-              H2
+              H
             </IconButton>
           </Tooltip>
         </Box>
         
         {/* Text formatting */}
         <Box sx={{ display: 'flex', mr: 1 }}>
-          <Tooltip title="Kalın">
+          <Tooltip title="Bold">
             <IconButton 
               size="small" 
               onClick={() => editor?.chain().focus().toggleBold().run()}
@@ -123,7 +129,7 @@ const RichTextEditor = ({ content, onChange, disabled = false }: RichTextEditorP
             </IconButton>
           </Tooltip>
           
-          <Tooltip title="İtalik">
+          <Tooltip title="Italic">
             <IconButton 
               size="small" 
               onClick={() => editor?.chain().focus().toggleItalic().run()}
@@ -149,23 +155,25 @@ const RichTextEditor = ({ content, onChange, disabled = false }: RichTextEditorP
         
         {/* Lists */}
         <Box sx={{ display: 'flex', mr: 1 }}>
-          <Tooltip title="Madde işaretli liste">
+          <Tooltip title="Bullet List">
             <IconButton 
               size="small" 
               onClick={() => editor?.chain().focus().toggleBulletList().run()}
               disabled={disabled || !editor?.can().chain().focus().toggleBulletList().run()}
               color={editor?.isActive('bulletList') ? 'primary' : 'default'}
+              sx={{ color: 'text.primary', fontWeight: 'bold' }}
             >
               •
             </IconButton>
           </Tooltip>
           
-          <Tooltip title="Numaralı liste">
+          <Tooltip title="Numbered List">
             <IconButton 
               size="small" 
               onClick={() => editor?.chain().focus().toggleOrderedList().run()}
               disabled={disabled || !editor?.can().chain().focus().toggleOrderedList().run()}
               color={editor?.isActive('orderedList') ? 'primary' : 'default'}
+              sx={{ color: 'text.primary', fontWeight: 'bold' }}
             >
               1.
             </IconButton>
