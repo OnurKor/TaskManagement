@@ -17,7 +17,6 @@ import {
   useTheme
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
 import FolderIcon from '@mui/icons-material/Folder';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -223,34 +222,35 @@ const TaskNode = ({
             {task.Subject}
           </Typography>
 
-          {/* Description Icon showing if description exists - with tooltip to show preview */}
+          {/* Description - Directly show formatted description in the card */}
           {task.Description && (
-            <Tooltip
-              title={
-                <Box sx={{ maxWidth: 300 }}>
-                  <Typography variant="caption" fontWeight="bold" display="block" gutterBottom>
-                    Görev Açıklaması:
-                  </Typography>
-                  <Box 
-                    dangerouslySetInnerHTML={{ __html: task.Description }} 
-                    sx={{
-                      '& p': { margin: '0.2em 0', fontSize: '0.8rem' },
-                      '& ul, & ol': { paddingLeft: 2, margin: '0.2em 0' },
-                      '& li': { fontSize: '0.8rem' }
-                    }}
-                  />
-                </Box>
-              }
-              arrow
-              placement="top-start"
+            <Box 
+              sx={{ 
+                pl: hasChildren ? 0 : 4.5, 
+                mb: 2,
+                mt: 1,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+                p: 1.5,
+                backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.5),
+                maxHeight: '200px',
+                overflowY: 'auto'
+              }}
             >
-              <Box sx={{ pl: hasChildren ? 0 : 4.5, mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <DescriptionIcon fontSize="small" color="action" />
-                <Typography variant="caption" color="text.secondary">
-                  Detaylı açıklama mevcut
-                </Typography>
-              </Box>
-            </Tooltip>
+              <Box 
+                dangerouslySetInnerHTML={{ __html: task.Description }} 
+                sx={{
+                  fontSize: '0.85rem',
+                  '& p': { margin: '0.5em 0' },
+                  '& ul, & ol': { paddingLeft: 2 },
+                  '& li': { fontSize: '0.85rem' },
+                  '& h1': { fontSize: '1.1rem', marginTop: 0 },
+                  '& h2': { fontSize: '1rem' },
+                  '& h3': { fontSize: '0.95rem' }
+                }}
+              />
+            </Box>
           )}
           
           <Divider sx={{ my: 1.5 }} />
