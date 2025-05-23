@@ -73,8 +73,11 @@ describe('DeleteConfirmationModal', () => {
 
     // Check that buttons are disabled
     expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /delete/i })).toBeDisabled();
-    
+    // Hem 'Delete' hem de 'Deleting...' metni için kontrol et
+    expect(
+      screen.getByRole('button', { name: /delet/i }) ||
+      screen.getByRole('button', { name: /deleting/i })
+    ).toBeDisabled();
     // Check for loading indicator (CircularProgress)
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });

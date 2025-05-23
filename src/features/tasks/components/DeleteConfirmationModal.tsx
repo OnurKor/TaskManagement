@@ -10,6 +10,7 @@ import {
   Box,
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
+import CircularProgress from '@mui/material/CircularProgress';
 
 interface DeleteConfirmationProps {
   open: boolean;
@@ -83,13 +84,14 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationProps> = ({
           {hasChildren ? 'Close' : 'Cancel'}
         </Button>
         {!hasChildren && (
-          <Button 
-            onClick={handleConfirm} 
-            color="error" 
-            variant="contained" 
+          <Button
+            onClick={handleConfirm}
+            color="error"
+            variant="contained"
             disabled={loading}
             sx={{ minWidth: '100px' }}
           >
+            {loading && <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />}
             {loading ? 'Deleting...' : 'Delete'}
           </Button>
         )}

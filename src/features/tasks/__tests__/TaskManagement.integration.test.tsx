@@ -158,7 +158,7 @@ describe('Task Management Integration', () => {
     
     // Wait for modal to appear and fill out the form
     await waitFor(() => {
-      expect(screen.getByText(/Add New Task/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Add New Task/i })).toBeInTheDocument();
     });
     
     // Fill out the task form
@@ -167,7 +167,8 @@ describe('Task Management Integration', () => {
     
     // Select a status
     await user.click(screen.getByLabelText(/Status/i));
-    await user.click(screen.getByText('Open'));
+    // Birden fazla 'Open' olduğu için menüdeki ikinciyi seç
+    await user.click(screen.getAllByText('Open')[1]);
     
     // Fill out estimated hours
     await user.clear(screen.getByLabelText(/Estimated Hours/i));

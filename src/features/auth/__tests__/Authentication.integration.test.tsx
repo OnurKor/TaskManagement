@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '../../../test/test-utils';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
@@ -88,121 +87,30 @@ vi.mock('react-router-dom', async () => {
 });
 
 describe('Authentication Flow', () => {
-  it('should allow a user to log in successfully', async () => {
-    const user = userEvent.setup();
-    const store = createTestStore();
-    
-    render(
-      <Provider store={store}>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/dashboard" element={<div>Dashboard</div>} />
-          </Routes>
-        </BrowserRouter>
-      </Provider>
-    );
-    
-    // Wait for the login form to appear
-    await waitFor(() => {
-      expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
-    });
-    
-    // Fill out the login form
-    await user.type(screen.getByLabelText(/Email/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/Password/i), 'password123');
-    
-    // Submit the login form
-    await user.click(screen.getByRole('button', { name: /Sign In/i }));
-    
-    // Wait for login success and check that the user is redirected or authenticated
-    await waitFor(() => {
-      // Check Redux store was updated with user data
-      const state = store.getState();
-      expect({
-        id: state.user.id,
-        email: state.user.email,
-        name: state.user.name,
-        surname: state.user.surname
-      }).toEqual(mockUser);
-      expect(state.user.isLoggedIn).toBe(true);
-      
-      // Check localStorage was updated with tokens
-      expect(localStorage.getItem('accessToken')).toBe('fake-access-token');
-    });
-  });
-  
-  it('should display an error message on login failure', async () => {
-    const user = userEvent.setup();
-    const store = createTestStore();
-    
-    // Override the login handler for this specific test
-    server.use(
-      http.post('/api/auth/login', () => {
-        return HttpResponse.json(
-          { error: 'Invalid credentials' }, 
-          { status: 401 }
-        );
-      })
-    );
-    
-    render(
-      <Provider store={store}>
-        <BrowserRouter>
-          <Login />
-        </BrowserRouter>
-      </Provider>
-    );
-    
-    // Fill out the login form with invalid credentials
-    await user.type(screen.getByLabelText(/Email/i), 'wrong@example.com');
-    await user.type(screen.getByLabelText(/Password/i), 'wrongpassword');
-    
-    // Submit the login form
-    await user.click(screen.getByRole('button', { name: /Sign In/i }));
-    
-    // Wait for error message to appear
-    await waitFor(() => {
-      expect(screen.getByText(/Invalid credentials/i)).toBeInTheDocument();
-    });
-    
-    // Verify user is not authenticated in store
-    const state = store.getState();
-    expect(state.user.isLoggedIn).toBe(false);
-    expect(state.user.id).toBe(null);
-    expect(state.user.email).toBe(null);
-    expect(state.user.name).toBe(null);
-    expect(state.user.surname).toBe(null);
-  });
-  
   it('should allow a user to register successfully', async () => {
     const user = userEvent.setup();
     const store = createTestStore();
     
     render(
       <Provider store={store}>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-          </Routes>
-        </BrowserRouter>
+        <Register />
       </Provider>
     );
     
     // Wait for the registration form to appear
     await waitFor(() => {
-      expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText('Email Address')).toBeInTheDocument();
     });
     
     // Fill out the registration form
-    await user.type(screen.getByLabelText(/Name/i), 'New');
-    await user.type(screen.getByLabelText(/Surname/i), 'User');
-    await user.type(screen.getByLabelText(/Email/i), 'new@example.com');
-    await user.type(screen.getByLabelText(/Password/i), 'newpassword123');
+    await user.type(screen.getByLabelText('First Name'), 'New');
+    await user.type(screen.getByLabelText('Last Name'), 'User');
+    await user.type(screen.getByLabelText('Email Address'), 'new@example.com');
+    await user.type(screen.getByLabelText('Password'), 'newpassword123');
+    await user.type(screen.getByLabelText('Confirm Password'), 'newpassword123');
     
     // Submit the registration form
-    await user.click(screen.getByRole('button', { name: /Sign Up/i }));
+    await user.click(screen.getByRole('button', { name: /Register/i }));
     
     // Wait for registration success
     await waitFor(() => {
@@ -219,9 +127,85 @@ describe('Authentication Flow', () => {
         name: 'New',
         surname: 'User'
       });
-      
       // Check localStorage was updated with tokens
       expect(localStorage.getItem('accessToken')).toBe('fake-access-token');
     });
+  });
+
+  it('should allow a user to log in successfully', async () => {
+    const user = userEvent.setup();
+    const store = createTestStore();
+    
+    render(
+      <Provider store={store}>
+        <Login />
+      </Provider>
+    );
+    
+    // Wait for the login form to appear
+    await waitFor(() => {
+      expect(screen.getByLabelText('Email Address')).toBeInTheDocument();
+    });
+    
+    // Fill out the login form
+    await user.type(screen.getByLabelText('Email Address'), 'test@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password123');
+    
+    // Submit the login form
+    await user.click(screen.getByRole('button', { name: /Sign In/i }));
+    
+    // Wait for login success and check that the user is redirected or authenticated
+    await waitFor(() => {
+      const state = store.getState();
+      expect(state.user.isLoggedIn).toBe(true);
+      expect({
+        id: state.user.id,
+        email: state.user.email,
+        name: state.user.name,
+        surname: state.user.surname
+      }).toEqual(mockUser);
+      expect(localStorage.getItem('accessToken')).toBe('fake-access-token');
+    });
+  });
+
+  it('should display an error message on login failure', async () => {
+    const user = userEvent.setup();
+    const store = createTestStore();
+    
+    // Override the login handler for this specific test
+    server.use(
+      http.post('/api/auth/login', () => {
+        return HttpResponse.json(
+          { error: 'Invalid credentials' }, 
+          { status: 401 }
+        );
+      })
+    );
+    
+    render(
+      <Provider store={store}>
+        <Login />
+      </Provider>
+    );
+    
+    // Fill out the login form with invalid credentials
+    await user.type(screen.getByLabelText('Email Address'), 'wrong@example.com');
+    await user.type(screen.getByLabelText('Password'), 'wrongpassword');
+    
+    // Submit the login form
+    await user.click(screen.getByRole('button', { name: /Sign In/i }));
+    
+    // Wait for error message to appear
+    await waitFor(() => {
+      // Alert component ile render edilen hata mesajı
+      expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
+    });
+    // Verify user is not authenticated in store
+    const state = store.getState();
+    expect(state.user.isLoggedIn).toBe(false);
+    expect(state.user.id).toBe(null);
+    expect(state.user.email).toBe(null);
+    expect(state.user.name).toBe(null);
+    expect(state.user.surname).toBe(null);
   });
 });

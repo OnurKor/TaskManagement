@@ -45,9 +45,14 @@ describe('AddTaskModal', () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    mockFetchUsers.mockResolvedValue(mockUsers);
+    mockFetchSprints.mockResolvedValue(mockSprints);
     (useTaskService as any).mockReturnValue({
       fetchUsers: mockFetchUsers,
       fetchSprints: mockFetchSprints,
+      fetchTasks: vi.fn().mockResolvedValue([]),
+      addTask: vi.fn().mockResolvedValue(undefined),
+      updateTask: vi.fn().mockResolvedValue(undefined),
       loading: false,
       error: null
     });
@@ -57,7 +62,7 @@ describe('AddTaskModal', () => {
     render(<AddTaskModal {...defaultProps} />);
 
     // Check modal title
-    expect(screen.getByText('Create New Task')).toBeInTheDocument();
+    expect(screen.getByText('Add New Task')).toBeInTheDocument();
     
     // Check form fields
     expect(screen.getByLabelText(/Task Name/i)).toBeInTheDocument();
@@ -95,9 +100,14 @@ describe('AddTaskModal', () => {
       />
     );
 
+    // Wait for users and sprints to load and select options to be rendered
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Sprint/i).querySelectorAll('option').length).toBeGreaterThan(0);
+      expect(screen.getByLabelText(/Assigned To/i).querySelectorAll('option').length).toBeGreaterThan(0);
+    });
+
     // Check modal title
-    expect(screen.getByText('Edit Task')).toBeInTheDocument();
-    
+    expect(screen.getByText('Update Task')).toBeInTheDocument();
     // Check form fields have been populated
     await waitFor(() => {
       expect(screen.getByLabelText(/Task Name/i)).toHaveValue('Existing Task');
@@ -110,13 +120,24 @@ describe('AddTaskModal', () => {
     const user = userEvent.setup();
     render(<AddTaskModal {...defaultProps} />);
 
+    // Butonun render olmasını bekle
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /create/i })).toBeInTheDocument();
+    });
+
+    // Sprint ve User select options'larının DOM'da olduğundan emin ol
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Sprint/i).querySelectorAll('option').length).toBeGreaterThan(0);
+      expect(screen.getByLabelText(/Assigned To/i).querySelectorAll('option').length).toBeGreaterThan(0);
+    });
+
     // Try to submit with empty form
     await user.click(screen.getByRole('button', { name: /create/i }));
     
-    // Check for validation errors
+    // Check for validation errors (hem helperText hem de alert için)
     await waitFor(() => {
-      expect(screen.getByText('Task name is required')).toBeInTheDocument();
-      expect(screen.getByText('Subject is required')).toBeInTheDocument();
+      expect(screen.queryByText('Task name is required') || screen.queryByText(/Task name is required/i)).toBeTruthy();
+      expect(screen.queryByText('Subject is required') || screen.queryByText(/Subject is required/i)).toBeTruthy();
     });
     
     // Make sure onAdd was not called
@@ -133,21 +154,27 @@ describe('AddTaskModal', () => {
     await user.type(screen.getByLabelText(/Task Name/i), 'New Test Task');
     await user.type(screen.getByLabelText(/Subject/i), 'Unit Testing');
     await user.type(screen.getByLabelText(/Estimated Hours/i), '3');
-    
     // Using the mock RichTextEditor
     await user.type(screen.getByTestId('mock-rich-text'), '<p>Task description</p>');
-    
-    // Wait for users and sprints to load and select them
-    await waitFor(() => {
-      expect(mockFetchUsers).toHaveBeenCalled();
-      expect(mockFetchSprints).toHaveBeenCalled();
-    });
 
-    // Status is already selected by default
-    
+    // Wait for users and sprints to load and select options to be rendered
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Sprint/i).querySelectorAll('option').length).toBeGreaterThan(0);
+      expect(screen.getByLabelText(/Assigned To/i).querySelectorAll('option').length).toBeGreaterThan(0);
+    });
+    // Select sprint
+    await user.click(screen.getByLabelText(/Sprint/i));
+    await user.click(screen.getByText('Sprint 1'));
+    // Select assigned user
+    await user.click(screen.getByLabelText(/Assigned To/i));
+    await user.click(screen.getByText('User 1'));
+
+    // Butonun render olmasını bekle
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument();
+    });
     // Submit form
-    await user.click(screen.getByRole('button', { name: /create/i }));
-    
+    await user.click(screen.getByRole('button', { name: 'Create' }));
     // Verify form submission
     await waitFor(() => {
       expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({
@@ -195,7 +222,7 @@ describe('AddTaskModal', () => {
     await user.type(screen.getByLabelText(/Task Name/i), 'Updated Task Name');
     
     // Submit form
-    await user.click(screen.getByRole('button', { name: /update/i }));
+    await user.click(screen.getByRole('button', { name: 'Update' }));
     
     // Verify form submission
     await waitFor(() => {
@@ -214,9 +241,9 @@ describe('AddTaskModal', () => {
     const user = userEvent.setup();
     render(<AddTaskModal {...defaultProps} />);
 
-    // Click the cancel button
-    await user.click(screen.getByRole('button', { name: /cancel/i }));
-    
+    // Cancel butonunun label'ını DOM'dan kontrol et ve birebir kullan
+    const cancelButton = screen.getByRole('button', { name: /cancel/i }) || screen.getByText(/cancel/i);
+    await user.click(cancelButton);
     // Verify onClose was called
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
@@ -232,10 +259,19 @@ describe('AddTaskModal', () => {
     await user.type(screen.getByLabelText(/Task Name/i), 'New Test Task');
     await user.type(screen.getByLabelText(/Subject/i), 'Unit Testing');
     await user.type(screen.getByLabelText(/Estimated Hours/i), '3');
-    
+    // Wait for users and sprints to load and select options to be rendered
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Sprint/i).querySelectorAll('option').length).toBeGreaterThan(0);
+      expect(screen.getByLabelText(/Assigned To/i).querySelectorAll('option').length).toBeGreaterThan(0);
+    });
+    // Select sprint
+    await user.click(screen.getByLabelText(/Sprint/i));
+    await user.click(screen.getByText('Sprint 1'));
+    // Select assigned user
+    await user.click(screen.getByLabelText(/Assigned To/i));
+    await user.click(screen.getByText('User 1'));
     // Submit form that will fail
-    await user.click(screen.getByRole('button', { name: /create/i }));
-    
+    await user.click(screen.getByRole('button', { name: 'Create' }));
     // Verify error is displayed
     await waitFor(() => {
       expect(onAddError).toHaveBeenCalled();
