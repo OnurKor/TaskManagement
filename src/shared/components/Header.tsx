@@ -19,6 +19,7 @@ import { useAppSelector } from '../../store/hooks';
 import { signOut } from '../../features/auth/services/authService';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import daxapLogo from '../../assets/daxap.343ff2f281752f056e66.webp';
 
 const Header = () => {
   const { name, surname } = useAppSelector(state => state.user);
@@ -97,21 +98,32 @@ const Header = () => {
             py: { xs: 0.8, sm: 1 },
           }}
         >
-          <Typography 
-            variant="h6" 
-            component="div"
-            sx={{ 
-              fontWeight: 700, 
-              color: scrolled ? 'primary.dark' : 'primary.dark',
-              opacity: scrolled ? 1 : 0.9,
-              display: 'flex',
-              alignItems: 'center',
-              fontSize: { xs: '1.1rem', sm: '1.25rem' },
-              letterSpacing: '-0.01em',
-            }}
-          >
-            Daxap Task Manager
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <img
+              src={daxapLogo}
+              alt="Daxap Logo"
+              style={{
+                height: 60,
+                marginRight: 10,
+                display: 'block',
+              }}
+            />
+            <Typography 
+              variant="h6" 
+              component="div"
+              sx={{ 
+                fontWeight: 700, 
+                color: scrolled ? 'primary.dark' : 'primary.dark',
+                opacity: scrolled ? 1 : 0.9,
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                letterSpacing: '-0.01em',
+              }}
+            >
+             Task Manager
+            </Typography>
+          </Box>
           
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {!isMobile && (
