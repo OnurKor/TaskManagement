@@ -19,7 +19,6 @@ import {
   Select,
   FormHelperText,
   Alert,
-  Tooltip,
 } from "@mui/material";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -113,8 +112,6 @@ const AddTaskModal = ({
     fetchTasks,
     addTask,
     updateTask,
-    canBeParent,
-    hasMaxChildren,
   } = useTaskService();
 
   // Animation timing
@@ -226,6 +223,7 @@ const AddTaskModal = ({
       );
     } finally {
       setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
@@ -327,7 +325,6 @@ const AddTaskModal = ({
               handleChange,
               setFieldValue,
               isValid,
-              handleBlur,
               dirty,
             }) => (
               <Form>
