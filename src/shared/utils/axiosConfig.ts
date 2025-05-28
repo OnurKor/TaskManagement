@@ -20,7 +20,7 @@ let failedQueue: QueueItem[] = [];
  * @param error - Error that occurred during refresh, if any
  * @param token - New access token if refresh was successful
  */
-const processQueue = (error: any, token: string | null = null): void => {
+const processQueue = (error: any, token: string | null = null): void => {  // refresh sırasında gelen istekleri sıraya alır
   failedQueue.forEach(item => {
     if (error) {
       item.reject(error);
@@ -48,7 +48,7 @@ const api: AxiosInstance = axios.create({
 });
 
 /**
- * Request interceptor to add authentication token to all outgoing requests
+ * Request interceptor to add authentication token to all outgoing requests  token ekler
  */
 api.interceptors.request.use(
   (config): InternalAxiosRequestConfig => {
@@ -68,7 +68,7 @@ api.interceptors.request.use(
 );
 
 /**
- * Response interceptor that handles token refresh when 401 errors occur
+ * Response interceptor that handles token refresh when 401 errors occur new token
  */
 api.interceptors.response.use(
   (response: AxiosResponse): AxiosResponse => {

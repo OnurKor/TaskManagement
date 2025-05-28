@@ -6,6 +6,8 @@ import api from '../utils/axiosConfig'; // Mevcut axios instance'ı
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_API_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Supabase’e istek atmak için tekrar kullanılabilir bir request fonksiyonu
+
 export interface RequestOptions {
   method?: Method;
   body?: any;
